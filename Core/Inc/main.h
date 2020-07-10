@@ -29,16 +29,16 @@ extern "C" {
 
 /* Includes ------------------------------------------------------------------*/
 #include "stm32f7xx_hal.h"
-#include "PWMControl.h"
-#include "LED.h"
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
-
+#include "bno055.h"
 /* USER CODE END Includes */
 
 /* Exported types ------------------------------------------------------------*/
 /* USER CODE BEGIN ET */
+extern I2C_HandleTypeDef hi2c1;
+
 extern TIM_HandleTypeDef htim1;
 extern TIM_HandleTypeDef htim4;
 /* USER CODE END ET */
@@ -59,10 +59,15 @@ void HAL_TIM_MspPostInit(TIM_HandleTypeDef *htim);
 void Error_Handler(void);
 
 /* USER CODE BEGIN EFP */
+extern void aaa(void);
 
 /* USER CODE END EFP */
 
 /* Private defines -----------------------------------------------------------*/
+#define USB_TX_Pin GPIO_PIN_2
+#define USB_TX_GPIO_Port GPIOA
+#define USB_RX_Pin GPIO_PIN_3
+#define USB_RX_GPIO_Port GPIOA
 #define Green_LED_Pin GPIO_PIN_12
 #define Green_LED_GPIO_Port GPIOD
 #define Red_LED_Pin GPIO_PIN_13
@@ -75,6 +80,17 @@ void Error_Handler(void);
 #define PWM4_J5_P4_GPIO_Port GPIOA
 /* USER CODE BEGIN Private defines */
 extern unsigned int sysTickCounter;
+extern s32 comres;
+extern u8 power_mode;
+extern s16 accel_datax;
+extern s16 accel_datay;
+extern s16 accel_dataz;
+extern double d_euler_data_h;
+extern double d_euler_data_r;
+extern double d_euler_data_p;
+extern struct bno055_gravity_double_t d_gravity_xyz;
+extern struct bno055_mag_double_t d_mag_xyz;
+extern struct bno055_euler_double_t d_euler_hpr;
 /* USER CODE END Private defines */
 
 #ifdef __cplusplus
