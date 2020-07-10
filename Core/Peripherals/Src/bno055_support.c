@@ -611,14 +611,14 @@ s8 BNO055_I2C_bus_write(u8 dev_addr, u8 reg_addr, u8 *reg_data, u8 cnt)
  */
 
 uint8_t byte_out[3]={0};
-  uint8_t byte_in[3]={0};
+uint8_t byte_in[3]={0};
 s8 BNO055_I2C_bus_read(u8 dev_addr, u8 reg_addr, u8 *reg_data, u8 cnt)
 {
-//    s32 BNO055_iERROR = BNO055_INIT_VALUE;
-//    u8 array[I2C_BUFFER_LEN] = { BNO055_INIT_VALUE };
-//    u8 stringpos = BNO055_INIT_VALUE;
-//
-//    array[BNO055_INIT_VALUE] = reg_addr;
+    s32 BNO055_iERROR = BNO055_INIT_VALUE;
+    u8 array[I2C_BUFFER_LEN] = { BNO055_INIT_VALUE };
+    u8 stringpos = BNO055_INIT_VALUE;
+
+    array[BNO055_INIT_VALUE] = reg_addr;
 //
 //    /* Please take the below API as your reference
 //     * for read the data using I2C communication
@@ -630,29 +630,26 @@ s8 BNO055_I2C_bus_read(u8 dev_addr, u8 reg_addr, u8 *reg_data, u8 cnt)
 //     * In the driver BNO055_SUCCESS defined as 0
 //     * and FAILURE defined as -1
 //     */
-//    for (stringpos = BNO055_INIT_VALUE; stringpos < cnt; stringpos++)
-//    {
-//        *(reg_data + stringpos) = array[stringpos];
-//    }
-//    HAL_I2C_Master_Receive(&hi2c1, 0x29<<1, reg_data, cnt, 10);
-	 HAL_StatusTypeDef status = HAL_OK;
-	s32 iError = BNO055_INIT_VALUE;
+    for (stringpos = BNO055_INIT_VALUE; stringpos < cnt; stringpos++)
+    {
+        *(reg_data + stringpos) = array[stringpos];
+    }
+    HAL_I2C_Master_Transmit(&hi2c1, 0x29<<1, array, cnt, 10);
+    HAL_I2C_Master_Receive(&hi2c1, 0x29<<1, (uint8_t*)reg_data, cnt, 10);
 
-	 for (int i = 0; i <cnt; i++)
-	          {
-	                byte_out[0] = reg_addr+i;
-	                byte_out[1] = 0;
-	      //    status = HAL_I2C_Master_Receive(&hi2c1,0x29<<1,reg_data ,cnt,10);
-	                status = HAL_I2C_Master_Transmit(&hi2c1,(uint16_t)0x29<<1,(uint8_t*)byte_out,1,10); //!!10
-	                status = HAL_I2C_Master_Receive(&hi2c1,(uint16_t)0x29<<1,(uint8_t*)reg_data+i,1,10); //!!10
 
-	      //        byte_out[0] = i;
-	      //        byte_out[1] = 0x0;
-	      //        HAL_I2C_Master_Transmit(&hi2c1,0x29<<1,byte_out,1,10);
-	      //        HAL_I2C_Master_Receive(&hi2c1,0x29<<1,ports0+i, 1,10);
-	          }
+//	HAL_StatusTypeDef status = HAL_OK;
+//	s32 iError = BNO055_INIT_VALUE;
+//
+//	for (int i = 0; i < cnt; i++) {
+//		byte_out[0] = reg_addr + i;
+//		byte_out[1] = 0;
+//		//    status = HAL_I2C_Master_Receive(&hi2c1,0x29<<1,reg_data ,cnt,10);
+//		status = HAL_I2C_Master_Transmit(&hi2c1, (uint16_t) 0x29 << 1,(uint8_t*) byte_out, 1, 10); //!!10
+//		status = HAL_I2C_Master_Receive(&hi2c1, (uint16_t) 0x29 << 1,(uint8_t*) reg_data + i, 1, 10); //!!10
+//	}
 
-    return (s8)iError;
+	return (s8) BNO055_iERROR;
 }
 
 /*  Brief : The delay routine
@@ -661,7 +658,7 @@ s8 BNO055_I2C_bus_read(u8 dev_addr, u8 reg_addr, u8 *reg_data, u8 cnt)
 void BNO055_delay_msek(u32 msek)
 {
     /*Here you can write your own delay routine*/
-//	HAL_Delay(5);
+	HAL_Delay(msek);
 }
 
 void BNOInit()

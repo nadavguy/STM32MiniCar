@@ -2,8 +2,8 @@ bno055_support.c:110:5:bno055_data_readout_template	400	static
 bno055_support.c:537:4:I2C_routine	4	static
 bno055_support.c:569:4:BNO055_I2C_bus_write	40	static
 bno055_support.c:615:4:BNO055_I2C_bus_read	40	static
-bno055_support.c:661:6:BNO055_delay_msek	16	static
-bno055_support.c:667:6:BNOInit	8	static
-bno055_support.c:676:6:readBNOAnglesDeg	8	static
-bno055_support.c:684:6:readBNOAccelerations	8	static
-bno055_support.c:689:6:readBNOMagnetometer	8	static
+bno055_support.c:658:6:BNO055_delay_msek	16	static
+bno055_support.c:664:6:BNOInit	8	static
+bno055_support.c:673:6:readBNOAnglesDeg	8	static
+bno055_support.c:681:6:readBNOAccelerations	8	static
+bno055_support.c:686:6:readBNOMagnetometer	8	static
