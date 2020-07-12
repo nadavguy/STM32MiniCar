@@ -676,6 +676,9 @@ void readBNOAnglesDeg()
 //	comres += bno055_convert_double_euler_r_deg(&d_euler_data_r);
 //	comres += bno055_convert_double_euler_p_deg(&d_euler_data_p);
 	comres += bno055_convert_double_euler_hpr_deg(&d_euler_hpr);
+	Roll = d_euler_hpr.p;
+	Pitch = d_euler_hpr.r;
+	Yaw = d_euler_hpr.h;
 }
 
 void readBNOAccelerations()
