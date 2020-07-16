@@ -44,6 +44,7 @@ ff.c:3511:9:f_read	64	static
 ff.c:3611:9:f_write	56	static
 ff.c:3732:9:f_sync	32	static
 ff.c:3813:9:f_close	24	static
+ff.c:3869:9:f_chdir	88	static
 ff.c:4001:9:f_lseek	72	static
 ff.c:4162:9:f_opendir	32	static
 ff.c:4232:9:f_closedir	24	static
@@ -56,6 +57,10 @@ ff.c:4475:9:f_truncate	32	static
 ff.c:4525:9:f_unlink	136	static
 ff.c:4620:9:f_mkdir	104	static
 ff.c:4717:9:f_rename	168	static
+ff.c:4825:9:f_chmod	80	static
+ff.c:4872:9:f_utime	80	static
+ff.c:4919:9:f_getlabel	96	static
+ff.c:5013:9:f_setlabel	112	static
 ff.c:5301:9:f_mkfs	128	static
 ff.c:5830:8:f_gets	40	static
 ff.c:5917:6:putc_bfd	24	static

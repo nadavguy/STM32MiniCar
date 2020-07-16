@@ -1,1 +1,2 @@
-terminal.c:9:6:SendToScreen	8	static
+terminal.c:10:6:SendToScreen	8	static
+terminal.c:16:6:getCMD	4	static

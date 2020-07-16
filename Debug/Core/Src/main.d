@@ -28,8 +28,6 @@ Core/Src/main.o: ../Core/Src/main.c ../Core/Inc/main.h \
  ../Drivers/STM32F7xx_HAL_Driver/Inc/stm32f7xx_hal_pwr.h \
  ../Drivers/STM32F7xx_HAL_Driver/Inc/stm32f7xx_hal_pwr_ex.h \
  ../Drivers/STM32F7xx_HAL_Driver/Inc/stm32f7xx_hal_qspi.h \
- ../Drivers/STM32F7xx_HAL_Driver/Inc/stm32f7xx_hal_mmc.h \
- ../Drivers/STM32F7xx_HAL_Driver/Inc/stm32f7xx_ll_sdmmc.h \
  ../Drivers/STM32F7xx_HAL_Driver/Inc/stm32f7xx_hal_spi.h \
  ../Drivers/STM32F7xx_HAL_Driver/Inc/stm32f7xx_hal_spi_ex.h \
  ../Drivers/STM32F7xx_HAL_Driver/Inc/stm32f7xx_hal_tim.h \
@@ -44,7 +42,7 @@ Core/Src/main.o: ../Core/Src/main.c ../Core/Inc/main.h \
  ../Middlewares/Third_Party/FatFs/src/ff.h ../FATFS/Target/user_diskio.h \
  ../Core/GPIO/Inc/PWMControl.h ../Core/Peripherals/Inc/LED.h \
  ../Core/Peripherals/Inc/ms5611.h ../Core/Peripherals/Inc/terminal.h \
- ../Core/GPIO/Inc/PushButton.h
+ ../Core/GPIO/Inc/PushButton.h ../Core/Peripherals/Inc/FlashQSPIAgent.h
 
 ../Core/Inc/main.h:
 
@@ -106,10 +104,6 @@ Core/Src/main.o: ../Core/Src/main.c ../Core/Inc/main.h \
 
 ../Drivers/STM32F7xx_HAL_Driver/Inc/stm32f7xx_hal_qspi.h:
 
-../Drivers/STM32F7xx_HAL_Driver/Inc/stm32f7xx_hal_mmc.h:
-
-../Drivers/STM32F7xx_HAL_Driver/Inc/stm32f7xx_ll_sdmmc.h:
-
 ../Drivers/STM32F7xx_HAL_Driver/Inc/stm32f7xx_hal_spi.h:
 
 ../Drivers/STM32F7xx_HAL_Driver/Inc/stm32f7xx_hal_spi_ex.h:
@@ -149,3 +143,5 @@ Core/Src/main.o: ../Core/Src/main.c ../Core/Inc/main.h \
 ../Core/Peripherals/Inc/terminal.h:
 
 ../Core/GPIO/Inc/PushButton.h:
+
+../Core/Peripherals/Inc/FlashQSPIAgent.h:
