@@ -1,2 +1,3 @@
 terminal.c:10:6:SendToScreen	8	static
 terminal.c:16:6:getCMD	4	static
+terminal.c:21:6:ParseRCMessage	24	static

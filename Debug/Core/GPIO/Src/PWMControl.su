@@ -1,4 +1,8 @@
-PWMControl.c:9:6:start_pwm3	16	static
-PWMControl.c:15:6:stop_pwm3	8	static
-PWMControl.c:20:6:start_pwm4	16	static
-PWMControl.c:26:6:stop_pwm4	8	static
+PWMControl.c:9:6:start_pwm1	16	static
+PWMControl.c:15:6:stop_pwm1	8	static
+PWMControl.c:20:6:start_pwm2	16	static
+PWMControl.c:26:6:stop_pwm2	8	static
+PWMControl.c:32:6:start_pwm3	16	static
+PWMControl.c:38:6:stop_pwm3	8	static
+PWMControl.c:43:6:start_pwm4	16	static
+PWMControl.c:49:6:stop_pwm4	8	static

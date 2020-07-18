@@ -43,10 +43,14 @@ typedef enum { false, true } bool;
 extern I2C_HandleTypeDef hi2c1;
 
 extern TIM_HandleTypeDef htim1;
+extern TIM_HandleTypeDef htim2;
 extern TIM_HandleTypeDef htim4;
 extern UART_HandleTypeDef huart2;
 extern SPI_HandleTypeDef hspi1;
 extern char USBTXArray[1024];
+extern uint8_t UART5RXArray[128];
+
+extern bool isNewMagDataAvailable;
 
 /* USER CODE END ET */
 
@@ -74,8 +78,6 @@ extern double CurrentTime(void);
 /* USER CODE END EFP */
 
 /* Private defines -----------------------------------------------------------*/
-#define Flash_WP_Pin GPIO_PIN_2
-#define Flash_WP_GPIO_Port GPIOE
 #define Flash_Reset_Pin GPIO_PIN_1
 #define Flash_Reset_GPIO_Port GPIOA
 #define USB_TX_Pin GPIO_PIN_2
@@ -84,6 +86,8 @@ extern double CurrentTime(void);
 #define USB_RX_GPIO_Port GPIOA
 #define MS5611_CS_Pin GPIO_PIN_4
 #define MS5611_CS_GPIO_Port GPIOA
+#define PWM1_J1_P1_Pin GPIO_PIN_5
+#define PWM1_J1_P1_GPIO_Port GPIOA
 #define Green_LED_Pin GPIO_PIN_12
 #define Green_LED_GPIO_Port GPIOD
 #define Red_LED_Pin GPIO_PIN_13
@@ -94,6 +98,8 @@ extern double CurrentTime(void);
 #define PWM3_J5_P1_GPIO_Port GPIOA
 #define PWM4_J5_P4_Pin GPIO_PIN_10
 #define PWM4_J5_P4_GPIO_Port GPIOA
+#define PWM2_J1_P4_Pin GPIO_PIN_11
+#define PWM2_J1_P4_GPIO_Port GPIOA
 /* USER CODE BEGIN Private defines */
 extern unsigned int sysTickCounter;
 extern s32 comres;

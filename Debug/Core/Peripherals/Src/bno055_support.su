@@ -5,5 +5,5 @@ bno055_support.c:615:4:BNO055_I2C_bus_read	40	static
 bno055_support.c:658:6:BNO055_delay_msek	16	static
 bno055_support.c:664:6:BNOInit	8	static
 bno055_support.c:673:6:readBNOAnglesDeg	16	static
-bno055_support.c:684:6:readBNOAccelerations	8	static
-bno055_support.c:689:6:readBNOMagnetometer	8	static
+bno055_support.c:686:6:readBNOAccelerations	8	static
+bno055_support.c:698:6:readBNOMagnetometer	8	static

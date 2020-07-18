@@ -17,3 +17,8 @@ void getCMD()
 {
 
 }
+
+void ParseRCMessage(uint8_t *pData)
+{
+	int a = 1;
+}

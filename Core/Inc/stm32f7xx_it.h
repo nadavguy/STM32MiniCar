@@ -61,6 +61,7 @@ void DMA1_Stream6_IRQHandler(void);
 void ADC_IRQHandler(void);
 void I2C1_EV_IRQHandler(void);
 void USART2_IRQHandler(void);
+void UART5_IRQHandler(void);
 void QUADSPI_IRQHandler(void);
 /* USER CODE BEGIN EFP */
 

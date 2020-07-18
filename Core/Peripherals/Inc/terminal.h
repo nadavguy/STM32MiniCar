@@ -9,5 +9,6 @@
 #define PERIPHERALS_INC_TERMINAL_H_
 
 extern void SendToScreen(void);
+extern void ParseRCMessage(uint8_t *pData);
 
 #endif /* PERIPHERALS_INC_TERMINAL_H_ */

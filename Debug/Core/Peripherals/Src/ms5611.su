@@ -1,6 +1,7 @@
-ms5611.c:32:6:MS56XXReset	8	static
-ms5611.c:41:10:MS56XXReadProm	16	static
-ms5611.c:53:6:MS56XXInit	8	static
-ms5611.c:75:6:MS56XXSendCmd	16	static
-ms5611.c:85:10:MS56XXRead3Bytes	16	static
-ms5611.c:99:10:GetAltitudeAndTemp	16	static
+ms5611.c:34:6:MS56XXReset	8	static
+ms5611.c:43:10:MS56XXReadProm	16	static
+ms5611.c:55:6:MS56XXInit	8	static
+ms5611.c:78:6:MS56XXSendCmd	16	static
+ms5611.c:88:10:MS56XXRead3Bytes	16	static
+ms5611.c:102:10:GetAltitudeAndTemp	16	static
+ms5611.c:112:6:MS56XXCyclicRead	8	static

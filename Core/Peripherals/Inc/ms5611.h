@@ -8,6 +8,10 @@
 #ifndef PERIPHERALS_INC_MS5611_H_
 #define PERIPHERALS_INC_MS5611_H_
 
+extern int32_t TEMP;
+extern int32_t P;
+extern bool isNewMS56XXDataAvailable;
+
 extern void MS56XXReset(void);
 extern uint16_t MS56XXReadProm(uint8_t address);
 extern void MS56XXInit(void);

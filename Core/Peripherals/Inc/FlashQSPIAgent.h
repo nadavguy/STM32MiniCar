@@ -20,6 +20,8 @@ uint8_t QSPI_Read_Status_registers(QSPI_HandleTypeDef *hqspi,uint16_t* R1,uint16
 uint8_t QSPI_Reset_Status_registers(QSPI_HandleTypeDef *hqspi,uint16_t* R1,uint16_t* R2,uint16_t* R3);
 uint8_t QSPI_AutoPolling_Write_in_progress(QSPI_HandleTypeDef *hqspi, uint32_t Timeout);
 uint8_t QSPI_READMD(uint8_t *Mid, uint8_t *Mim);
+uint8_t QSPI_ResetFlash(void);
+uint8_t QSPI_DeleteFlash(void);
 
 #define QSPI_FORCE_RESET()         __HAL_RCC_QSPI_FORCE_RESET()
 #define QSPI_RELEASE_RESET()       __HAL_RCC_QSPI_RELEASE_RESET()

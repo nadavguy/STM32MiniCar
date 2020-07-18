@@ -18,8 +18,10 @@ uint16_t Coeff6 = 0;
 uint16_t MSCRC = 0;
 bool isCmdSet = false;
 bool isPressureLastCmd = false;
+bool isNewMS56XXDataAvailable = false;
 uint32_t LastTempMeasurement = 0;
 uint32_t LastPressureMeasurement = 0;
+uint32_t LastCommandSent = 0;
 uint32_t RawTemp = 0;
 uint32_t RawPressure = 0;
 
@@ -53,6 +55,7 @@ uint16_t MS56XXReadProm(uint8_t address)
 void MS56XXInit(void)
 {
 	MS56XXReset();
+	HAL_Delay(50);
 	MS56XXReadProm(0xA0);
 	Coeff1 = MS56XXReadProm(0xA2);
 	Coeff2 = MS56XXReadProm(0xA4);
@@ -104,4 +107,51 @@ uint16_t GetAltitudeAndTemp(void)
 	SNES = Coeff1 * 32768 + (Coeff3 * dT) / 127;
 	P = ((RawPressure * SNES) / 2097152 - OFF) / 32768;
 	return P;
+}
+
+void MS56XXCyclicRead(void)
+{
+	if ( (HAL_GetTick() - LastTempMeasurement) > 1000 )
+	{
+		if (!isCmdSet)
+		{
+			MS56XXSendCmd(0x58);
+			isCmdSet = true;
+			isNewMS56XXDataAvailable = false;
+			isPressureLastCmd = false;
+			LastCommandSent = HAL_GetTick();
+		}
+	}
+
+	if ((HAL_GetTick() - LastPressureMeasurement) > 20)
+	{
+		if (!isCmdSet)
+		{
+			MS56XXSendCmd(0x48);
+			isCmdSet = true;
+			isNewMS56XXDataAvailable = false;
+			isPressureLastCmd = true;
+			LastCommandSent = HAL_GetTick();
+		}
+	}
+
+	if ( (HAL_GetTick() - LastCommandSent) > 9 )
+	{
+		if (isCmdSet)
+		{
+			if (!isPressureLastCmd)
+			{
+				RawTemp = MS56XXRead3Bytes(0);
+				LastTempMeasurement = HAL_GetTick();
+			}
+			else
+			{
+				RawPressure = MS56XXRead3Bytes(0);
+				LastPressureMeasurement = HAL_GetTick();
+			}
+			isCmdSet = false;
+			GetAltitudeAndTemp();
+			isNewMS56XXDataAvailable = true;
+		}
+	}
 }

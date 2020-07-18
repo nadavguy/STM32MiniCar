@@ -681,13 +681,28 @@ void readBNOAnglesDeg()
 	Yaw = d_euler_hpr.h;
 }
 
+uint32_t LastAccelerationsMeasurement = 0;
+
 void readBNOAccelerations()
 {
-	comres += bno055_convert_double_gravity_xyz_msq(&d_gravity_xyz);
+	if ((HAL_GetTick() - LastAccelerationsMeasurement) > 20)
+	{
+		comres += bno055_convert_double_gravity_xyz_msq(&d_gravity_xyz);
+		LastAccelerationsMeasurement = HAL_GetTick();
+	}
+
 }
+
+uint32_t LastMagnetometerMeasurement = 0;
 
 void readBNOMagnetometer()
 {
-	comres += bno055_convert_double_mag_xyz_uT(&d_mag_xyz);
+	isNewMagDataAvailable = false;
+	if ( (HAL_GetTick() - LastMagnetometerMeasurement) > 50 )
+	{
+		comres += bno055_convert_double_mag_xyz_uT(&d_mag_xyz);
+		LastMagnetometerMeasurement = HAL_GetTick();
+		isNewMagDataAvailable = true;
+	}
 }
 #endif

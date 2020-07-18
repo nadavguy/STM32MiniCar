@@ -7,6 +7,11 @@
 
 #ifndef GPIO_INC_PWMCONTROL_H_
 #define GPIO_INC_PWMCONTROL_H_
+extern void start_pwm1(int onTimemSec);
+extern void stop_pwm1(void);
+
+extern void start_pwm2(int onTimemSec);
+extern void stop_pwm2(void);
 
 extern void start_pwm3(int onTimemSec);
 extern void stop_pwm3(void);

@@ -35,6 +35,7 @@
 #include "terminal.h"
 #include "PushButton.h"
 #include "FlashQSPIAgent.h"
+
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -58,17 +59,24 @@ I2C_HandleTypeDef hi2c1;
 
 QSPI_HandleTypeDef hqspi;
 
+RTC_HandleTypeDef hrtc;
+
+MMC_HandleTypeDef hmmc1;
+
 SPI_HandleTypeDef hspi1;
 
 TIM_HandleTypeDef htim1;
+TIM_HandleTypeDef htim2;
 TIM_HandleTypeDef htim4;
 
+UART_HandleTypeDef huart5;
 UART_HandleTypeDef huart2;
 DMA_HandleTypeDef hdma_usart2_rx;
 DMA_HandleTypeDef hdma_usart2_tx;
 
 /* USER CODE BEGIN PV */
 uint8_t USBRXArray[1024] = { 0 };
+uint8_t UART5RXArray[128] = { 0 };
 char USBTXArray[1024] = "";
 
 char TerminalBuffer[1024] = "";
@@ -93,11 +101,19 @@ double Yaw = 0;
 
 double vBat = 0;
 
+bool isNewMagDataAvailable = false;
+bool MagWasInMax = true;
+bool MagWasInMin = false;
+
 FRESULT FS_ret;
 
 uint16_t RR1 = 0;
 uint16_t RR2 = 0;
 uint16_t RR3 = 0;
+uint16_t SpeedCounter = 0;
+uint16_t MeasuredRPM = 0;
+
+uint32_t LastRPMCycle = 0;
 
 uint8_t MID = 0;
 uint8_t DID = 0;
@@ -116,6 +132,10 @@ static void MX_I2C1_Init(void);
 static void MX_QUADSPI_Init(void);
 static void MX_SPI1_Init(void);
 static void MX_ADC1_Init(void);
+static void MX_SDMMC1_MMC_Init(void);
+static void MX_RTC_Init(void);
+static void MX_UART5_Init(void);
+static void MX_TIM2_Init(void);
 /* USER CODE BEGIN PFP */
 
 double measureBattery();
@@ -163,6 +183,10 @@ int main(void)
   MX_QUADSPI_Init();
   MX_SPI1_Init();
   MX_ADC1_Init();
+  MX_SDMMC1_MMC_Init();
+  MX_RTC_Init();
+  MX_UART5_Init();
+  MX_TIM2_Init();
   /* USER CODE BEGIN 2 */
 	HAL_TIM_PWM_Init(&htim1);	// PWM Generation Servos
 	HAL_TIM_PWM_Init(&htim4); 	// LED
@@ -170,58 +194,67 @@ int main(void)
 //	HAL_TIM_IC_Init(&htim2);		//
 //	HAL_TIM_IC_Start(&htim2, TIM_CHANNEL_1);
 
+	QSPI_Init();
 
-	vBat = measureBattery();
-
-	MS56XXInit();
-
-//	HAL_GPIO_WritePin(GPIOC, GPIO_PIN_11, GPIO_PIN_RESET); 	// QSPI CS Low
+//	HAL_GPIO_WritePin(GPIOC, GPIO_PIN_11, GPIO_PIN_SET); 	// QSPI CS Low
 //	HAL_Delay(15);
 	HAL_GPIO_WritePin(GPIOE, GPIO_PIN_2, GPIO_PIN_SET); 	// QSPI WP High
 	HAL_Delay(15);
 	HAL_GPIO_WritePin(GPIOA, GPIO_PIN_1, GPIO_PIN_RESET);		// QSPI RST High
-	HAL_Delay(1);
+
 	HAL_GPIO_WritePin(GPIOA, GPIO_PIN_1, GPIO_PIN_SET);		// QSPI RST High
 	HAL_Delay(15);
 
-	  QSPI_Init();
+	QSPI_WriteEnable();
 
-	  QSPI_Read_Status_registers(&hqspi, &RR1, &RR2, &RR3);
 
-	  QSPI_READMD(&MID,&DID);
 
-	  QSPI_WriteEnable();
+//	  QSPI_ResetFlash();
+//
+//	  QSPI_DeleteFlash();
 
-	  QSPI_Read_Status_registers(&hqspi, &RR1, &RR2, &RR3);
+//	QSPI_Read_Status_registers(&hqspi, &RR1, &RR2, &RR3);
+//	RR2 = 0x00;
+//	HAL_Delay(40);
+//	QSPI_Reset_Status_registers(&hqspi, &RR1, &RR2, &RR3);
+//	HAL_Delay(40);
+//	RR2 = 0x39;
+//
+//	QSPI_Reset_Status_registers(&hqspi, &RR1, &RR2, &RR3);
+//	HAL_Delay(40);
+//	QSPI_READMD(&MID, &DID);
+//
+//	QSPI_Read_Status_registers(&hqspi, &RR1, &RR2, &RR3);
+//	FATFS *getFreeFs;
+//	uint8_t buffer[_MAX_SS];
+//	do
+//	{
+//		HAL_Delay(1);
+//		FS_ret = f_mount(&USERFatFS, "\\", 0);
+//	} while (FS_ret != FR_OK);
+//
+//	DWORD free_clusters, free_sectors, total_sectors;
+//
+//
+//	FS_ret = f_getfree("\\", &free_clusters, &getFreeFs);
+//	if (FS_ret != FR_OK)
+//	{
+//		FS_ret = f_mkfs("\\", FM_FAT, 0, buffer, sizeof(buffer));
+////		while (1);
+//	}
+//
+//	total_sectors = (getFreeFs->n_fatent - 2) * getFreeFs->csize;
+//	free_sectors = free_clusters * getFreeFs->csize;
+//
+//	do
+//	{
+//		HAL_Delay(1);
+//		FS_ret = f_open(&USERFile, "test.txt", FA_READ);
+//	} while (FS_ret != FR_OK);
 
-	do
-	{
-		HAL_Delay(1);
-		FS_ret = f_mount(&USERFatFS, "\\", 0);
-	} while (FS_ret != FR_OK);
-
-	DWORD free_clusters, free_sectors, total_sectors;
-
-	FATFS *getFreeFs;
-	uint8_t buffer[_MAX_SS];
-	FS_ret = f_getfree("\\", &free_clusters, &getFreeFs);
-	if (FS_ret != FR_OK)
-	{
-		FS_ret = f_mkfs("\\", FM_FAT, 0, buffer, sizeof(buffer));
-//		while (1);
-	}
-
-	total_sectors = (getFreeFs->n_fatent - 2) * getFreeFs->csize;
-	free_sectors = free_clusters * getFreeFs->csize;
-
-	do
-	{
-		HAL_Delay(1);
-		FS_ret = f_open(&USERFile, "test.txt", FA_READ);
-	} while (FS_ret != FR_OK);
-
+	vBat = measureBattery();
+	MS56XXInit();
 	BNOInit();
-
 	led_init();
 
 	readBNOAnglesDeg();
@@ -229,6 +262,8 @@ int main(void)
 	HAL_UART_Receive_DMA(&huart2, USBRXArray, 1024);
 	//Write Data to terminal - Example
 	ret = HAL_UART_Transmit_DMA(&huart2, USBTXArray, 1024);
+
+	HAL_UART_Receive_DMA(&huart5, UART5RXArray, 128);
 
   /* USER CODE END 2 */
 
@@ -253,7 +288,31 @@ int main(void)
 //		sprintf(USBTXArray, "%6.3f, Roll: %6.3f, Pitch: %6.3f, Yaw: %6.3f\r\n",
 //				CurrentTime(), Roll, Pitch, Yaw);
 //		SendToScreen();
+
+		MS56XXCyclicRead();
+//		if (isNewMS56XXDataAvailable)
+//		{
+//			sprintf(USBTXArray, "%6.3f, Pressure: %d, Temp: %d\r\n",
+//					CurrentTime(), P, TEMP);
+//			SendToScreen();
+//		}
+
 		CheckButton();
+		readBNOMagnetometer();
+
+		if (isNewMagDataAvailable)
+		{
+			sprintf(USBTXArray, "%6.3f, MagX: %6.3f, MagY: %6.3f, MagZ: %6.3f\r\n",
+								CurrentTime(), d_mag_xyz.x, d_mag_xyz.y, d_mag_xyz.z);
+						SendToScreen();
+		}
+
+		ParseRCMessage(UART5RXArray);
+		int PWMValue = 1000 * ((2 - 1) * (double)90.0  / (145.0 - 35.0) + 0.5);
+		start_pwm1(PWMValue); // Control Servo
+		start_pwm2(0*80); // Control Car Motor
+
+		MeasuredRPM = RPMMeasurement();
 
 	}
   /* USER CODE END 3 */
@@ -278,8 +337,9 @@ void SystemClock_Config(void)
   __HAL_PWR_VOLTAGESCALING_CONFIG(PWR_REGULATOR_VOLTAGE_SCALE1);
   /** Initializes the CPU, AHB and APB busses clocks 
   */
-  RCC_OscInitStruct.OscillatorType = RCC_OSCILLATORTYPE_HSE;
+  RCC_OscInitStruct.OscillatorType = RCC_OSCILLATORTYPE_LSI|RCC_OSCILLATORTYPE_HSE;
   RCC_OscInitStruct.HSEState = RCC_HSE_ON;
+  RCC_OscInitStruct.LSIState = RCC_LSI_ON;
   RCC_OscInitStruct.PLL.PLLState = RCC_PLL_ON;
   RCC_OscInitStruct.PLL.PLLSource = RCC_PLLSOURCE_HSE;
   RCC_OscInitStruct.PLL.PLLM = 25;
@@ -309,10 +369,14 @@ void SystemClock_Config(void)
   {
     Error_Handler();
   }
-  PeriphClkInitStruct.PeriphClockSelection = RCC_PERIPHCLK_TIM|RCC_PERIPHCLK_USART2
-                              |RCC_PERIPHCLK_I2C1;
+  PeriphClkInitStruct.PeriphClockSelection = RCC_PERIPHCLK_TIM|RCC_PERIPHCLK_RTC
+                              |RCC_PERIPHCLK_USART2|RCC_PERIPHCLK_UART5
+                              |RCC_PERIPHCLK_I2C1|RCC_PERIPHCLK_SDMMC1;
+  PeriphClkInitStruct.RTCClockSelection = RCC_RTCCLKSOURCE_LSI;
   PeriphClkInitStruct.Usart2ClockSelection = RCC_USART2CLKSOURCE_PCLK1;
+  PeriphClkInitStruct.Uart5ClockSelection = RCC_UART5CLKSOURCE_PCLK1;
   PeriphClkInitStruct.I2c1ClockSelection = RCC_I2C1CLKSOURCE_PCLK1;
+  PeriphClkInitStruct.Sdmmc1ClockSelection = RCC_SDMMC1CLKSOURCE_SYSCLK;
   PeriphClkInitStruct.TIMPresSelection = RCC_TIMPRES_ACTIVATED;
 
   if (HAL_RCCEx_PeriphCLKConfig(&PeriphClkInitStruct) != HAL_OK)
@@ -456,6 +520,100 @@ static void MX_QUADSPI_Init(void)
 }
 
 /**
+  * @brief RTC Initialization Function
+  * @param None
+  * @retval None
+  */
+static void MX_RTC_Init(void)
+{
+
+  /* USER CODE BEGIN RTC_Init 0 */
+
+  /* USER CODE END RTC_Init 0 */
+
+  RTC_TimeTypeDef sTime = {0};
+  RTC_DateTypeDef sDate = {0};
+
+  /* USER CODE BEGIN RTC_Init 1 */
+
+  /* USER CODE END RTC_Init 1 */
+  /** Initialize RTC Only 
+  */
+  hrtc.Instance = RTC;
+  hrtc.Init.HourFormat = RTC_HOURFORMAT_24;
+  hrtc.Init.AsynchPrediv = 127;
+  hrtc.Init.SynchPrediv = 255;
+  hrtc.Init.OutPut = RTC_OUTPUT_DISABLE;
+  hrtc.Init.OutPutPolarity = RTC_OUTPUT_POLARITY_HIGH;
+  hrtc.Init.OutPutType = RTC_OUTPUT_TYPE_OPENDRAIN;
+  if (HAL_RTC_Init(&hrtc) != HAL_OK)
+  {
+    Error_Handler();
+  }
+
+  /* USER CODE BEGIN Check_RTC_BKUP */
+
+  /* USER CODE END Check_RTC_BKUP */
+
+  /** Initialize RTC and set the Time and Date 
+  */
+  sTime.Hours = 0;
+  sTime.Minutes = 0;
+  sTime.Seconds = 0;
+  sTime.DayLightSaving = RTC_DAYLIGHTSAVING_NONE;
+  sTime.StoreOperation = RTC_STOREOPERATION_RESET;
+  if (HAL_RTC_SetTime(&hrtc, &sTime, RTC_FORMAT_BIN) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  sDate.WeekDay = RTC_WEEKDAY_MONDAY;
+  sDate.Month = RTC_MONTH_JANUARY;
+  sDate.Date = 1;
+  sDate.Year = 0;
+
+  if (HAL_RTC_SetDate(&hrtc, &sDate, RTC_FORMAT_BIN) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  /* USER CODE BEGIN RTC_Init 2 */
+
+  /* USER CODE END RTC_Init 2 */
+
+}
+
+/**
+  * @brief SDMMC1 Initialization Function
+  * @param None
+  * @retval None
+  */
+static void MX_SDMMC1_MMC_Init(void)
+{
+
+  /* USER CODE BEGIN SDMMC1_Init 0 */
+
+  /* USER CODE END SDMMC1_Init 0 */
+
+  /* USER CODE BEGIN SDMMC1_Init 1 */
+
+  /* USER CODE END SDMMC1_Init 1 */
+  hmmc1.Instance = SDMMC1;
+  hmmc1.Init.ClockEdge = SDMMC_CLOCK_EDGE_RISING;
+  hmmc1.Init.ClockBypass = SDMMC_CLOCK_BYPASS_DISABLE;
+  hmmc1.Init.ClockPowerSave = SDMMC_CLOCK_POWER_SAVE_DISABLE;
+  hmmc1.Init.BusWide = SDMMC_BUS_WIDE_1B;
+  hmmc1.Init.HardwareFlowControl = SDMMC_HARDWARE_FLOW_CONTROL_DISABLE;
+  hmmc1.Init.ClockDiv = 0;
+  if (HAL_MMC_Init(&hmmc1) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  /* USER CODE BEGIN SDMMC1_Init 2 */
+
+  /* USER CODE END SDMMC1_Init 2 */
+
+}
+
+/**
   * @brief SPI1 Initialization Function
   * @param None
   * @retval None
@@ -508,6 +666,7 @@ static void MX_TIM1_Init(void)
   /* USER CODE END TIM1_Init 0 */
 
   TIM_MasterConfigTypeDef sMasterConfig = {0};
+  TIM_IC_InitTypeDef sConfigIC = {0};
   TIM_OC_InitTypeDef sConfigOC = {0};
   TIM_BreakDeadTimeConfigTypeDef sBreakDeadTimeConfig = {0};
 
@@ -521,6 +680,10 @@ static void MX_TIM1_Init(void)
   htim1.Init.ClockDivision = TIM_CLOCKDIVISION_DIV1;
   htim1.Init.RepetitionCounter = 0;
   htim1.Init.AutoReloadPreload = TIM_AUTORELOAD_PRELOAD_ENABLE;
+  if (HAL_TIM_IC_Init(&htim1) != HAL_OK)
+  {
+    Error_Handler();
+  }
   if (HAL_TIM_PWM_Init(&htim1) != HAL_OK)
   {
     Error_Handler();
@@ -532,18 +695,25 @@ static void MX_TIM1_Init(void)
   {
     Error_Handler();
   }
-  sConfigOC.OCMode = TIM_OCMODE_PWM1;
-  sConfigOC.Pulse = 400;
-  sConfigOC.OCPolarity = TIM_OCPOLARITY_HIGH;
-  sConfigOC.OCNPolarity = TIM_OCNPOLARITY_HIGH;
-  sConfigOC.OCFastMode = TIM_OCFAST_DISABLE;
-  sConfigOC.OCIdleState = TIM_OCIDLESTATE_RESET;
-  sConfigOC.OCNIdleState = TIM_OCNIDLESTATE_RESET;
-  if (HAL_TIM_PWM_ConfigChannel(&htim1, &sConfigOC, TIM_CHANNEL_1) != HAL_OK)
+  sConfigIC.ICPolarity = TIM_INPUTCHANNELPOLARITY_RISING;
+  sConfigIC.ICSelection = TIM_ICSELECTION_DIRECTTI;
+  sConfigIC.ICPrescaler = TIM_ICPSC_DIV1;
+  sConfigIC.ICFilter = 0;
+  if (HAL_TIM_IC_ConfigChannel(&htim1, &sConfigIC, TIM_CHANNEL_1) != HAL_OK)
   {
     Error_Handler();
   }
-  if (HAL_TIM_PWM_ConfigChannel(&htim1, &sConfigOC, TIM_CHANNEL_3) != HAL_OK)
+  if (HAL_TIM_IC_ConfigChannel(&htim1, &sConfigIC, TIM_CHANNEL_3) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  sConfigOC.OCMode = TIM_OCMODE_PWM1;
+  sConfigOC.Pulse = 600;
+  sConfigOC.OCPolarity = TIM_OCPOLARITY_HIGH;
+  sConfigOC.OCFastMode = TIM_OCFAST_DISABLE;
+  sConfigOC.OCIdleState = TIM_OCIDLESTATE_RESET;
+  sConfigOC.OCNIdleState = TIM_OCNIDLESTATE_RESET;
+  if (HAL_TIM_PWM_ConfigChannel(&htim1, &sConfigOC, TIM_CHANNEL_4) != HAL_OK)
   {
     Error_Handler();
   }
@@ -566,6 +736,55 @@ static void MX_TIM1_Init(void)
 
   /* USER CODE END TIM1_Init 2 */
   HAL_TIM_MspPostInit(&htim1);
+
+}
+
+/**
+  * @brief TIM2 Initialization Function
+  * @param None
+  * @retval None
+  */
+static void MX_TIM2_Init(void)
+{
+
+  /* USER CODE BEGIN TIM2_Init 0 */
+
+  /* USER CODE END TIM2_Init 0 */
+
+  TIM_MasterConfigTypeDef sMasterConfig = {0};
+  TIM_OC_InitTypeDef sConfigOC = {0};
+
+  /* USER CODE BEGIN TIM2_Init 1 */
+
+  /* USER CODE END TIM2_Init 1 */
+  htim2.Instance = TIM2;
+  htim2.Init.Prescaler = 539;
+  htim2.Init.CounterMode = TIM_COUNTERMODE_UP;
+  htim2.Init.Period = 8000;
+  htim2.Init.ClockDivision = TIM_CLOCKDIVISION_DIV1;
+  htim2.Init.AutoReloadPreload = TIM_AUTORELOAD_PRELOAD_ENABLE;
+  if (HAL_TIM_PWM_Init(&htim2) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  sMasterConfig.MasterOutputTrigger = TIM_TRGO_RESET;
+  sMasterConfig.MasterSlaveMode = TIM_MASTERSLAVEMODE_DISABLE;
+  if (HAL_TIMEx_MasterConfigSynchronization(&htim2, &sMasterConfig) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  sConfigOC.OCMode = TIM_OCMODE_PWM1;
+  sConfigOC.Pulse = 600;
+  sConfigOC.OCPolarity = TIM_OCPOLARITY_HIGH;
+  sConfigOC.OCFastMode = TIM_OCFAST_DISABLE;
+  if (HAL_TIM_PWM_ConfigChannel(&htim2, &sConfigOC, TIM_CHANNEL_1) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  /* USER CODE BEGIN TIM2_Init 2 */
+
+  /* USER CODE END TIM2_Init 2 */
+  HAL_TIM_MspPostInit(&htim2);
 
 }
 
@@ -623,6 +842,41 @@ static void MX_TIM4_Init(void)
 
   /* USER CODE END TIM4_Init 2 */
   HAL_TIM_MspPostInit(&htim4);
+
+}
+
+/**
+  * @brief UART5 Initialization Function
+  * @param None
+  * @retval None
+  */
+static void MX_UART5_Init(void)
+{
+
+  /* USER CODE BEGIN UART5_Init 0 */
+
+  /* USER CODE END UART5_Init 0 */
+
+  /* USER CODE BEGIN UART5_Init 1 */
+
+  /* USER CODE END UART5_Init 1 */
+  huart5.Instance = UART5;
+  huart5.Init.BaudRate = 115200;
+  huart5.Init.WordLength = UART_WORDLENGTH_8B;
+  huart5.Init.StopBits = UART_STOPBITS_1;
+  huart5.Init.Parity = UART_PARITY_NONE;
+  huart5.Init.Mode = UART_MODE_TX_RX;
+  huart5.Init.HwFlowCtl = UART_HWCONTROL_NONE;
+  huart5.Init.OverSampling = UART_OVERSAMPLING_16;
+  huart5.Init.OneBitSampling = UART_ONE_BIT_SAMPLE_DISABLE;
+  huart5.AdvancedInit.AdvFeatureInit = UART_ADVFEATURE_NO_INIT;
+  if (HAL_UART_Init(&huart5) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  /* USER CODE BEGIN UART5_Init 2 */
+
+  /* USER CODE END UART5_Init 2 */
 
 }
 
@@ -698,17 +952,29 @@ static void MX_GPIO_Init(void)
   __HAL_RCC_GPIOD_CLK_ENABLE();
 
   /*Configure GPIO pin Output Level */
-  HAL_GPIO_WritePin(Flash_WP_GPIO_Port, Flash_WP_Pin, GPIO_PIN_SET);
-
-  /*Configure GPIO pin Output Level */
   HAL_GPIO_WritePin(GPIOA, Flash_Reset_Pin|MS5611_CS_Pin, GPIO_PIN_RESET);
 
-  /*Configure GPIO pin : Flash_WP_Pin */
-  GPIO_InitStruct.Pin = Flash_WP_Pin;
-  GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
-  GPIO_InitStruct.Pull = GPIO_PULLUP;
-  GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
-  HAL_GPIO_Init(Flash_WP_GPIO_Port, &GPIO_InitStruct);
+  /*Configure GPIO pins : PE2 PE3 PE4 PE5 
+                           PE6 PE9 PE10 PE11 
+                           PE12 PE13 PE14 PE15 
+                           PE0 PE1 */
+  GPIO_InitStruct.Pin = GPIO_PIN_2|GPIO_PIN_3|GPIO_PIN_4|GPIO_PIN_5 
+                          |GPIO_PIN_6|GPIO_PIN_9|GPIO_PIN_10|GPIO_PIN_11 
+                          |GPIO_PIN_12|GPIO_PIN_13|GPIO_PIN_14|GPIO_PIN_15 
+                          |GPIO_PIN_0|GPIO_PIN_1;
+  GPIO_InitStruct.Mode = GPIO_MODE_ANALOG;
+  GPIO_InitStruct.Pull = GPIO_NOPULL;
+  HAL_GPIO_Init(GPIOE, &GPIO_InitStruct);
+
+  /*Configure GPIO pins : PC13 PC0 PC1 PC2 
+                           PC4 PC5 PC6 PC7 
+                           PC9 PC10 */
+  GPIO_InitStruct.Pin = GPIO_PIN_13|GPIO_PIN_0|GPIO_PIN_1|GPIO_PIN_2 
+                          |GPIO_PIN_4|GPIO_PIN_5|GPIO_PIN_6|GPIO_PIN_7 
+                          |GPIO_PIN_9|GPIO_PIN_10;
+  GPIO_InitStruct.Mode = GPIO_MODE_ANALOG;
+  GPIO_InitStruct.Pull = GPIO_NOPULL;
+  HAL_GPIO_Init(GPIOC, &GPIO_InitStruct);
 
   /*Configure GPIO pin : PA0 */
   GPIO_InitStruct.Pin = GPIO_PIN_0;
@@ -730,6 +996,32 @@ static void MX_GPIO_Init(void)
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
   HAL_GPIO_Init(MS5611_CS_GPIO_Port, &GPIO_InitStruct);
 
+  /*Configure GPIO pins : PA6 PA7 PA9 PA12 
+                           PA15 */
+  GPIO_InitStruct.Pin = GPIO_PIN_6|GPIO_PIN_7|GPIO_PIN_9|GPIO_PIN_12 
+                          |GPIO_PIN_15;
+  GPIO_InitStruct.Mode = GPIO_MODE_ANALOG;
+  GPIO_InitStruct.Pull = GPIO_NOPULL;
+  HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);
+
+  /*Configure GPIO pins : PB0 PB1 PB10 PB11 
+                           PB12 PB13 PB14 PB15 */
+  GPIO_InitStruct.Pin = GPIO_PIN_0|GPIO_PIN_1|GPIO_PIN_10|GPIO_PIN_11 
+                          |GPIO_PIN_12|GPIO_PIN_13|GPIO_PIN_14|GPIO_PIN_15;
+  GPIO_InitStruct.Mode = GPIO_MODE_ANALOG;
+  GPIO_InitStruct.Pull = GPIO_NOPULL;
+  HAL_GPIO_Init(GPIOB, &GPIO_InitStruct);
+
+  /*Configure GPIO pins : PD8 PD9 PD10 PD11 
+                           PD14 PD0 PD1 PD3 
+                           PD4 PD5 PD6 PD7 */
+  GPIO_InitStruct.Pin = GPIO_PIN_8|GPIO_PIN_9|GPIO_PIN_10|GPIO_PIN_11 
+                          |GPIO_PIN_14|GPIO_PIN_0|GPIO_PIN_1|GPIO_PIN_3 
+                          |GPIO_PIN_4|GPIO_PIN_5|GPIO_PIN_6|GPIO_PIN_7;
+  GPIO_InitStruct.Mode = GPIO_MODE_ANALOG;
+  GPIO_InitStruct.Pull = GPIO_NOPULL;
+  HAL_GPIO_Init(GPIOD, &GPIO_InitStruct);
+
 }
 
 /* USER CODE BEGIN 4 */
@@ -742,6 +1034,33 @@ double measureBattery()
 {
 	uint32_t D = HAL_ADC_GetValue(&hadc1);
 	return 2 * 3.3 * D / 4096.0;
+}
+
+uint16_t RPMMeasurement()
+{
+	uint16_t LocalCounter = 0;
+	if (HAL_GetTick() - LastRPMCycle < 1000)
+	{
+		if ((d_mag_xyz.z > 3000) && (d_mag_xyz.y < -1500) && (!MagWasInMax))
+		{
+			SpeedCounter++;
+			MagWasInMax = true;
+			MagWasInMin = false;
+		}
+		else if ((d_mag_xyz.z < 0) && (d_mag_xyz.y > 850) && (MagWasInMax))
+		{
+			SpeedCounter++;
+			MagWasInMax = false;
+			MagWasInMin = true;
+		}
+	}
+	else
+	{
+		LocalCounter = SpeedCounter;
+		SpeedCounter = 0;
+		LastRPMCycle = HAL_GetTick();
+	}
+	return LocalCounter;
 }
 
 /* USER CODE END 4 */
