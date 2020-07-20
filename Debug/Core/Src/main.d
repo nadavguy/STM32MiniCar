@@ -46,7 +46,8 @@ Core/Src/main.o: ../Core/Src/main.c ../Core/Inc/main.h \
  ../Middlewares/Third_Party/FatFs/src/ff.h ../Core/Inc/user_diskio.h \
  ../Core/GPIO/Inc/PWMControl.h ../Core/Peripherals/Inc/LED.h \
  ../Core/Peripherals/Inc/ms5611.h ../Core/Peripherals/Inc/terminal.h \
- ../Core/GPIO/Inc/PushButton.h ../Core/Peripherals/Inc/FlashQSPIAgent.h
+ ../Core/GPIO/Inc/PushButton.h ../Core/Peripherals/Inc/FlashQSPIAgent.h \
+ ../Core/Peripherals/Inc/bno055_support.h
 
 ../Core/Inc/main.h:
 
@@ -159,3 +160,5 @@ Core/Src/main.o: ../Core/Src/main.c ../Core/Inc/main.h \
 ../Core/GPIO/Inc/PushButton.h:
 
 ../Core/Peripherals/Inc/FlashQSPIAgent.h:
+
+../Core/Peripherals/Inc/bno055_support.h:

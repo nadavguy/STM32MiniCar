@@ -661,7 +661,7 @@ void BNO055_delay_msek(u32 msek)
 	HAL_Delay(msek);
 }
 
-void BNOInit()
+void BNOInit(void)
 {
 	I2C_routine();
 	comres = bno055_init(&bno055);
@@ -670,7 +670,7 @@ void BNOInit()
     comres += bno055_set_operation_mode(BNO055_OPERATION_MODE_NDOF);
 }
 
-void readBNOAnglesDeg()
+void readBNOAnglesDeg(void)
 {
 //	comres += bno055_convert_double_euler_h_deg(&d_euler_data_h);
 //	comres += bno055_convert_double_euler_r_deg(&d_euler_data_r);
@@ -683,7 +683,7 @@ void readBNOAnglesDeg()
 
 uint32_t LastAccelerationsMeasurement = 0;
 
-void readBNOAccelerations()
+void readBNOAccelerations(void)
 {
 	if ((HAL_GetTick() - LastAccelerationsMeasurement) > 20)
 	{
@@ -695,7 +695,7 @@ void readBNOAccelerations()
 
 uint32_t LastMagnetometerMeasurement = 0;
 
-void readBNOMagnetometer()
+void readBNOMagnetometer(void)
 {
 	isNewMagDataAvailable = false;
 	if ( (HAL_GetTick() - LastMagnetometerMeasurement) > 50 )

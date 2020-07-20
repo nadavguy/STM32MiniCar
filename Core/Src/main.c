@@ -36,6 +36,7 @@
 #include "terminal.h"
 #include "PushButton.h"
 #include "FlashQSPIAgent.h"
+#include "bno055_support.h"
 //#include "includes.h"
 //#include "typedefs.h"
 /* USER CODE END Includes */
@@ -82,6 +83,8 @@ uint8_t UART5RXArray[128] = { 0 };
 char USBTXArray[1024] = "";
 
 char TerminalBuffer[1024] = "";
+
+char FileReadBuffer[1024] = "";
 
 struct bno055_t bno055;
 s32 comres = BNO055_ERROR;
@@ -247,6 +250,8 @@ int main(void)
 		FS_ret2 = f_open(&USERFile, "Index.txt", FA_READ);
 	} while (FS_ret2 != FR_OK);
 
+	unsigned int br =0;
+	FS_ret2 = f_read(&USERFile, &FileReadBuffer, sizeof(FileReadBuffer), &br);
 //	BNOInit();
 
 	vBat = measureBattery();
@@ -286,7 +291,7 @@ int main(void)
 //				CurrentTime(), Roll, Pitch, Yaw);
 //		SendToScreen();
 
-MS56XXCyclicRead();
+		MS56XXCyclicRead();
 //		if (isNewMS56XXDataAvailable)
 //		{
 //			sprintf(USBTXArray, "%6.3f, Pressure: %d, Temp: %d\r\n",
