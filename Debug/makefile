@@ -10,12 +10,11 @@ RM := rm -rf
 -include sources.mk
 -include Middlewares/Third_Party/FatFs/src/option/subdir.mk
 -include Middlewares/Third_Party/FatFs/src/subdir.mk
--include FATFS/Target/subdir.mk
--include FATFS/App/subdir.mk
 -include Drivers/STM32F7xx_HAL_Driver/Src/subdir.mk
 -include Core/Startup/subdir.mk
 -include Core/Src/subdir.mk
 -include Core/Peripherals/Src/subdir.mk
+-include Core/Inc/subdir.mk
 -include Core/GPIO/Src/subdir.mk
 -include subdir.mk
 -include objects.mk

@@ -8,6 +8,7 @@
 #include "main.h"
 #include "FlashQSPIAgent.h"
 #include "ff.h"
+#include "stdint.h"
 
 
 
@@ -284,10 +285,10 @@ uint8_t QSPI_READMD(uint8_t *Mid, uint8_t *Did)
   }
 
 
-  uint8_t reg2[6] = {0};
-  HAL_QSPI_Receive(&hqspi, &(reg2), HAL_QPSI_TIMEOUT_DEFAULT_VALUE);
-  *Mid = reg2[3];
-  *Did = reg2[4];
+ uint8_t reg2[6] = {0};
+ HAL_QSPI_Receive(&hqspi, &(reg2), HAL_QPSI_TIMEOUT_DEFAULT_VALUE);
+ *Mid = reg2[3];
+ *Did = reg2[4];
 //  HAL_QSPI_Receive(&hqspi, &(reg2[1]), HAL_QPSI_TIMEOUT_DEFAULT_VALUE);
 //  HAL_QSPI_Receive(&hqspi, &(reg2[2]), HAL_QPSI_TIMEOUT_DEFAULT_VALUE);
 //  HAL_QSPI_Receive(&hqspi, &(reg2[3]), HAL_QPSI_TIMEOUT_DEFAULT_VALUE);

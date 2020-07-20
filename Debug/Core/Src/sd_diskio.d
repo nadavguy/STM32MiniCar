@@ -1,6 +1,8 @@
-FATFS/App/fatfs.o: ../FATFS/App/fatfs.c ../FATFS/App/fatfs.h \
- ../Middlewares/Third_Party/FatFs/src/ff.h \
- ../Middlewares/Third_Party/FatFs/src/integer.h ../FATFS/Target/ffconf.h \
+Core/Src/sd_diskio.o: ../Core/Src/sd_diskio.c \
+ ../Middlewares/Third_Party/FatFs/src/ff_gen_drv.h \
+ ../Middlewares/Third_Party/FatFs/src/diskio.h \
+ ../Middlewares/Third_Party/FatFs/src/integer.h \
+ ../Middlewares/Third_Party/FatFs/src/ff.h ../Core/Inc/ffconf.h \
  ../Core/Inc/main.h ../Drivers/STM32F7xx_HAL_Driver/Inc/stm32f7xx_hal.h \
  ../Core/Inc/stm32f7xx_hal_conf.h \
  ../Drivers/STM32F7xx_HAL_Driver/Inc/stm32f7xx_hal_rcc.h \
@@ -40,18 +42,23 @@ FATFS/App/fatfs.o: ../FATFS/App/fatfs.c ../FATFS/App/fatfs.h \
  ../Drivers/STM32F7xx_HAL_Driver/Inc/stm32f7xx_hal_tim_ex.h \
  ../Drivers/STM32F7xx_HAL_Driver/Inc/stm32f7xx_hal_uart.h \
  ../Drivers/STM32F7xx_HAL_Driver/Inc/stm32f7xx_hal_uart_ex.h \
- ../Core/Peripherals/Inc/bno055.h \
- ../Middlewares/Third_Party/FatFs/src/ff_gen_drv.h \
+ ../Core/Peripherals/Inc/bno055.h ../Core/Inc/includes.h \
  ../Middlewares/Third_Party/FatFs/src/diskio.h \
- ../Middlewares/Third_Party/FatFs/src/ff.h ../FATFS/Target/user_diskio.h
+ ../Middlewares/Third_Party/FatFs/src/ff.h ../Core/Inc/fs_display.h \
+ ../Core/Inc/sd_diskio.h ../Core/Inc/bsp_driver_sd.h \
+ ../Core/Inc/stm32f7xx_hal_sd.h \
+ ../Drivers/STM32F7xx_HAL_Driver/Inc/stm32f7xx_ll_sdmmc.h \
+ ../Core/Inc/includes.h ../Core/Inc/arm_math.h
 
-../FATFS/App/fatfs.h:
+../Middlewares/Third_Party/FatFs/src/ff_gen_drv.h:
 
-../Middlewares/Third_Party/FatFs/src/ff.h:
+../Middlewares/Third_Party/FatFs/src/diskio.h:
 
 ../Middlewares/Third_Party/FatFs/src/integer.h:
 
-../FATFS/Target/ffconf.h:
+../Middlewares/Third_Party/FatFs/src/ff.h:
+
+../Core/Inc/ffconf.h:
 
 ../Core/Inc/main.h:
 
@@ -135,10 +142,22 @@ FATFS/App/fatfs.o: ../FATFS/App/fatfs.c ../FATFS/App/fatfs.h \
 
 ../Core/Peripherals/Inc/bno055.h:
 
-../Middlewares/Third_Party/FatFs/src/ff_gen_drv.h:
+../Core/Inc/includes.h:
 
 ../Middlewares/Third_Party/FatFs/src/diskio.h:
 
 ../Middlewares/Third_Party/FatFs/src/ff.h:
 
-../FATFS/Target/user_diskio.h:
+../Core/Inc/fs_display.h:
+
+../Core/Inc/sd_diskio.h:
+
+../Core/Inc/bsp_driver_sd.h:
+
+../Core/Inc/stm32f7xx_hal_sd.h:
+
+../Drivers/STM32F7xx_HAL_Driver/Inc/stm32f7xx_ll_sdmmc.h:
+
+../Core/Inc/includes.h:
+
+../Core/Inc/arm_math.h:

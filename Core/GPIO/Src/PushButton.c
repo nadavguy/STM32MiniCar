@@ -6,6 +6,10 @@
  */
 
 #include "main.h"
+#include "LED.h"
+#include "terminal.h"
+#include <string.h>
+#include <stdio.h>
 
 bool ButtonIsHigh = false;
 bool ButtonIsLow = false;

@@ -1,0 +1,26 @@
+// Module...: IWATCHDOG.C
+// Chip....: STM32F40x
+//-----------------------------------------------------------------------------
+
+#include "iwatchdog.h"
+//-----------------------------------------------------------------------------
+
+void iwdg_init(U08 prescaler, U16 reload)
+{
+
+	/*// Enable write access to IWDG_PR and IWDG_RLR registers
+  IWDG_WriteAccessCmd(IWDG_WriteAccess_Enable);
+
+  // Set counter clock prescaler
+  IWDG_SetPrescaler(prescaler);
+
+  // Set counter reload value
+  // LSI freq is @32KHz and the counter is 12 bit
+  IWDG_SetReload(reload);
+
+  // Reload IWDG counter
+  IWDG_ReloadCounter();
+
+  // Enable IWDG (the LSI oscillator will be enabled by hardware)
+  IWDG_Enable();*/
+}

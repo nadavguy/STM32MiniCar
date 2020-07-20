@@ -26,6 +26,7 @@
 /* USER CODE BEGIN Includes */
 #include "stdio.h"
 #include "string.h"
+#include "stdint.h"
 #include "PWMControl.h"
 #include "LED.h"
 #include "bno055.h"
@@ -35,7 +36,8 @@
 #include "terminal.h"
 #include "PushButton.h"
 #include "FlashQSPIAgent.h"
-
+//#include "includes.h"
+//#include "typedefs.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -105,7 +107,7 @@ bool isNewMagDataAvailable = false;
 bool MagWasInMax = true;
 bool MagWasInMin = false;
 
-FRESULT FS_ret;
+FRESULT FS_ret2;
 
 uint16_t RR1 = 0;
 uint16_t RR2 = 0;
@@ -130,12 +132,12 @@ static void MX_TIM1_Init(void);
 static void MX_USART2_UART_Init(void);
 static void MX_I2C1_Init(void);
 static void MX_QUADSPI_Init(void);
+static void MX_SDMMC1_MMC_Init(void);
 static void MX_SPI1_Init(void);
 static void MX_ADC1_Init(void);
-static void MX_SDMMC1_MMC_Init(void);
 static void MX_RTC_Init(void);
-static void MX_UART5_Init(void);
 static void MX_TIM2_Init(void);
+static void MX_UART5_Init(void);
 /* USER CODE BEGIN PFP */
 
 double measureBattery();
@@ -153,7 +155,7 @@ double measureBattery();
 int main(void)
 {
   /* USER CODE BEGIN 1 */
-
+//SCB->VTOR = 0x8020000;
   /* USER CODE END 1 */
 
   /* MCU Configuration--------------------------------------------------------*/
@@ -181,12 +183,12 @@ int main(void)
   MX_I2C1_Init();
   MX_FATFS_Init();
   MX_QUADSPI_Init();
+  MX_SDMMC1_MMC_Init();
   MX_SPI1_Init();
   MX_ADC1_Init();
-  MX_SDMMC1_MMC_Init();
   MX_RTC_Init();
-  MX_UART5_Init();
   MX_TIM2_Init();
+  MX_UART5_Init();
   /* USER CODE BEGIN 2 */
 	HAL_TIM_PWM_Init(&htim1);	// PWM Generation Servos
 	HAL_TIM_PWM_Init(&htim4); 	// LED
@@ -194,70 +196,65 @@ int main(void)
 //	HAL_TIM_IC_Init(&htim2);		//
 //	HAL_TIM_IC_Start(&htim2, TIM_CHANNEL_1);
 
-	QSPI_Init();
 
-//	HAL_GPIO_WritePin(GPIOC, GPIO_PIN_11, GPIO_PIN_SET); 	// QSPI CS Low
+//	vBat = measureBattery();
+//
+//	MS56XXInit();
+
+//	HAL_GPIO_WritePin(GPIOC, GPIO_PIN_11, GPIO_PIN_RESET); 	// QSPI CS Low
 //	HAL_Delay(15);
 	HAL_GPIO_WritePin(GPIOE, GPIO_PIN_2, GPIO_PIN_SET); 	// QSPI WP High
 	HAL_Delay(15);
 	HAL_GPIO_WritePin(GPIOA, GPIO_PIN_1, GPIO_PIN_RESET);		// QSPI RST High
-
+	HAL_Delay(1);
 	HAL_GPIO_WritePin(GPIOA, GPIO_PIN_1, GPIO_PIN_SET);		// QSPI RST High
 	HAL_Delay(15);
 
-	QSPI_WriteEnable();
+	  QSPI_Init();
+
+	  QSPI_Read_Status_registers(&hqspi, &RR1, &RR2, &RR3);
+	  RR2 = 0x22;
+	  RR3 = 0x60;
+	  QSPI_Reset_Status_registers(&hqspi, &RR1,  &RR2, &RR3);
+	  HAL_Delay(40);
+	  QSPI_READMD(&MID,&DID);
 
 
+	  QSPI_Read_Status_registers(&hqspi, &RR1, &RR2, &RR3);
+	do
+	{
+		HAL_Delay(1);
+		FS_ret2 = f_mount(&USERFatFS, "\\", 0);
+	} while (FS_ret2 != FR_OK);
 
-//	  QSPI_ResetFlash();
-//
-//	  QSPI_DeleteFlash();
+	DWORD free_clusters, free_sectors, total_sectors;
 
-//	QSPI_Read_Status_registers(&hqspi, &RR1, &RR2, &RR3);
-//	RR2 = 0x00;
-//	HAL_Delay(40);
-//	QSPI_Reset_Status_registers(&hqspi, &RR1, &RR2, &RR3);
-//	HAL_Delay(40);
-//	RR2 = 0x39;
-//
-//	QSPI_Reset_Status_registers(&hqspi, &RR1, &RR2, &RR3);
-//	HAL_Delay(40);
-//	QSPI_READMD(&MID, &DID);
-//
-//	QSPI_Read_Status_registers(&hqspi, &RR1, &RR2, &RR3);
-//	FATFS *getFreeFs;
-//	uint8_t buffer[_MAX_SS];
-//	do
-//	{
-//		HAL_Delay(1);
-//		FS_ret = f_mount(&USERFatFS, "\\", 0);
-//	} while (FS_ret != FR_OK);
-//
-//	DWORD free_clusters, free_sectors, total_sectors;
-//
-//
-//	FS_ret = f_getfree("\\", &free_clusters, &getFreeFs);
-//	if (FS_ret != FR_OK)
-//	{
-//		FS_ret = f_mkfs("\\", FM_FAT, 0, buffer, sizeof(buffer));
-////		while (1);
-//	}
-//
-//	total_sectors = (getFreeFs->n_fatent - 2) * getFreeFs->csize;
-//	free_sectors = free_clusters * getFreeFs->csize;
-//
-//	do
-//	{
-//		HAL_Delay(1);
-//		FS_ret = f_open(&USERFile, "test.txt", FA_READ);
-//	} while (FS_ret != FR_OK);
+	FATFS *getFreeFs;
+	uint8_t buffer[_MAX_SS];
+	FS_ret2 = f_getfree("\\", &free_clusters, &getFreeFs);
+	if (FS_ret2 != FR_OK)
+	{
+		FS_ret2 = f_mkfs("\\", FM_FAT, 0, buffer, sizeof(buffer));
+//		while (1);
+	}
+
+	total_sectors = (getFreeFs->n_fatent - 2) * getFreeFs->csize;
+	free_sectors = free_clusters * getFreeFs->csize;
+
+	do
+	{
+		HAL_Delay(1);
+		FS_ret2 = f_open(&USERFile, "Index.txt", FA_READ);
+	} while (FS_ret2 != FR_OK);
+
+//	BNOInit();
 
 	vBat = measureBattery();
 	MS56XXInit();
 	BNOInit();
-	led_init();
+  led_init();
 
-	readBNOAnglesDeg();
+//	readBNOAnglesDeg();
 	//Read Data from terminal - Example
 	HAL_UART_Receive_DMA(&huart2, USBRXArray, 1024);
 	//Write Data to terminal - Example
@@ -274,7 +271,7 @@ int main(void)
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
-		readBNOAnglesDeg();
+//		readBNOAnglesDeg();
 //		if ((fabs(Roll) < 30) && (fabs(Pitch) < 30))
 //		{
 //			SetRGB(0, 250, 0);
@@ -289,7 +286,7 @@ int main(void)
 //				CurrentTime(), Roll, Pitch, Yaw);
 //		SendToScreen();
 
-		MS56XXCyclicRead();
+MS56XXCyclicRead();
 //		if (isNewMS56XXDataAvailable)
 //		{
 //			sprintf(USBTXArray, "%6.3f, Pressure: %d, Temp: %d\r\n",
@@ -312,8 +309,8 @@ int main(void)
 		start_pwm1(PWMValue); // Control Servo
 		start_pwm2(0*80); // Control Car Motor
 
-		MeasuredRPM = RPMMeasurement();
-
+//		MeasuredRPM = RPMMeasurement();
+    
 	}
   /* USER CODE END 3 */
 }
@@ -345,7 +342,7 @@ void SystemClock_Config(void)
   RCC_OscInitStruct.PLL.PLLM = 25;
   RCC_OscInitStruct.PLL.PLLN = 432;
   RCC_OscInitStruct.PLL.PLLP = RCC_PLLP_DIV2;
-  RCC_OscInitStruct.PLL.PLLQ = 2;
+  RCC_OscInitStruct.PLL.PLLQ = 9;
   if (HAL_RCC_OscConfig(&RCC_OscInitStruct) != HAL_OK)
   {
     Error_Handler();
@@ -371,12 +368,14 @@ void SystemClock_Config(void)
   }
   PeriphClkInitStruct.PeriphClockSelection = RCC_PERIPHCLK_TIM|RCC_PERIPHCLK_RTC
                               |RCC_PERIPHCLK_USART2|RCC_PERIPHCLK_UART5
-                              |RCC_PERIPHCLK_I2C1|RCC_PERIPHCLK_SDMMC1;
+                              |RCC_PERIPHCLK_I2C1|RCC_PERIPHCLK_SDMMC1
+                              |RCC_PERIPHCLK_CLK48;
   PeriphClkInitStruct.RTCClockSelection = RCC_RTCCLKSOURCE_LSI;
   PeriphClkInitStruct.Usart2ClockSelection = RCC_USART2CLKSOURCE_PCLK1;
   PeriphClkInitStruct.Uart5ClockSelection = RCC_UART5CLKSOURCE_PCLK1;
   PeriphClkInitStruct.I2c1ClockSelection = RCC_I2C1CLKSOURCE_PCLK1;
-  PeriphClkInitStruct.Sdmmc1ClockSelection = RCC_SDMMC1CLKSOURCE_SYSCLK;
+  PeriphClkInitStruct.Clk48ClockSelection = RCC_CLK48SOURCE_PLL;
+  PeriphClkInitStruct.Sdmmc1ClockSelection = RCC_SDMMC1CLKSOURCE_CLK48;
   PeriphClkInitStruct.TIMPresSelection = RCC_TIMPRES_ACTIVATED;
 
   if (HAL_RCCEx_PeriphCLKConfig(&PeriphClkInitStruct) != HAL_OK)
@@ -552,7 +551,7 @@ static void MX_RTC_Init(void)
   }
 
   /* USER CODE BEGIN Check_RTC_BKUP */
-
+    
   /* USER CODE END Check_RTC_BKUP */
 
   /** Initialize RTC and set the Time and Date 
@@ -952,16 +951,29 @@ static void MX_GPIO_Init(void)
   __HAL_RCC_GPIOD_CLK_ENABLE();
 
   /*Configure GPIO pin Output Level */
-  HAL_GPIO_WritePin(GPIOA, Flash_Reset_Pin|MS5611_CS_Pin, GPIO_PIN_RESET);
+  HAL_GPIO_WritePin(Flash_WP_GPIO_Port, Flash_WP_Pin, GPIO_PIN_SET);
 
-  /*Configure GPIO pins : PE2 PE3 PE4 PE5 
-                           PE6 PE9 PE10 PE11 
-                           PE12 PE13 PE14 PE15 
-                           PE0 PE1 */
-  GPIO_InitStruct.Pin = GPIO_PIN_2|GPIO_PIN_3|GPIO_PIN_4|GPIO_PIN_5 
-                          |GPIO_PIN_6|GPIO_PIN_9|GPIO_PIN_10|GPIO_PIN_11 
-                          |GPIO_PIN_12|GPIO_PIN_13|GPIO_PIN_14|GPIO_PIN_15 
-                          |GPIO_PIN_0|GPIO_PIN_1;
+  /*Configure GPIO pin Output Level */
+  HAL_GPIO_WritePin(Flash_Reset_GPIO_Port, Flash_Reset_Pin, GPIO_PIN_SET);
+
+  /*Configure GPIO pin Output Level */
+  HAL_GPIO_WritePin(MS5611_CS_GPIO_Port, MS5611_CS_Pin, GPIO_PIN_RESET);
+
+  /*Configure GPIO pin : Flash_WP_Pin */
+  GPIO_InitStruct.Pin = Flash_WP_Pin;
+  GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
+  GPIO_InitStruct.Pull = GPIO_PULLUP;
+  GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
+  HAL_GPIO_Init(Flash_WP_GPIO_Port, &GPIO_InitStruct);
+
+  /*Configure GPIO pins : PE3 PE4 PE5 PE6 
+                           PE9 PE10 PE11 PE12 
+                           PE13 PE14 PE15 PE0 
+                           PE1 */
+  GPIO_InitStruct.Pin = GPIO_PIN_3|GPIO_PIN_4|GPIO_PIN_5|GPIO_PIN_6 
+                          |GPIO_PIN_9|GPIO_PIN_10|GPIO_PIN_11|GPIO_PIN_12 
+                          |GPIO_PIN_13|GPIO_PIN_14|GPIO_PIN_15|GPIO_PIN_0 
+                          |GPIO_PIN_1;
   GPIO_InitStruct.Mode = GPIO_MODE_ANALOG;
   GPIO_InitStruct.Pull = GPIO_NOPULL;
   HAL_GPIO_Init(GPIOE, &GPIO_InitStruct);
@@ -1034,33 +1046,6 @@ double measureBattery()
 {
 	uint32_t D = HAL_ADC_GetValue(&hadc1);
 	return 2 * 3.3 * D / 4096.0;
-}
-
-uint16_t RPMMeasurement()
-{
-	uint16_t LocalCounter = 0;
-	if (HAL_GetTick() - LastRPMCycle < 1000)
-	{
-		if ((d_mag_xyz.z > 3000) && (d_mag_xyz.y < -1500) && (!MagWasInMax))
-		{
-			SpeedCounter++;
-			MagWasInMax = true;
-			MagWasInMin = false;
-		}
-		else if ((d_mag_xyz.z < 0) && (d_mag_xyz.y > 850) && (MagWasInMax))
-		{
-			SpeedCounter++;
-			MagWasInMax = false;
-			MagWasInMin = true;
-		}
-	}
-	else
-	{
-		LocalCounter = SpeedCounter;
-		SpeedCounter = 0;
-		LastRPMCycle = HAL_GetTick();
-	}
-	return LocalCounter;
 }
 
 /* USER CODE END 4 */

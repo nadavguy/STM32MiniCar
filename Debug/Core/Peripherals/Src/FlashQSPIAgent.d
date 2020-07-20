@@ -42,7 +42,8 @@ Core/Peripherals/Src/FlashQSPIAgent.o: \
  ../Core/Peripherals/Inc/bno055.h \
  ../Core/Peripherals/Inc/FlashQSPIAgent.h \
  ../Middlewares/Third_Party/FatFs/src/ff.h \
- ../Middlewares/Third_Party/FatFs/src/integer.h ../FATFS/Target/ffconf.h
+ ../Middlewares/Third_Party/FatFs/src/integer.h ../Core/Inc/ffconf.h \
+ ../Core/Inc/main.h
 
 ../Core/Inc/main.h:
 
@@ -132,4 +133,6 @@ Core/Peripherals/Src/FlashQSPIAgent.o: \
 
 ../Middlewares/Third_Party/FatFs/src/integer.h:
 
-../FATFS/Target/ffconf.h:
+../Core/Inc/ffconf.h:
+
+../Core/Inc/main.h:

@@ -1,0 +1,3 @@
+fs_display.c:16:1:fs_disp_result	24	static
+fs_display.c:32:6:fs_disp_dir	24	static
+fs_display.c:64:13:fs_disp_file_info	16	static

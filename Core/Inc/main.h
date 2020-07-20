@@ -33,12 +33,17 @@ extern "C" {
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
 #include "bno055.h"
+#include "stdint.h"
+//#include "typedefs.h"
+
 
 /* USER CODE END Includes */
 
 /* Exported types ------------------------------------------------------------*/
 /* USER CODE BEGIN ET */
-typedef enum { false, true } bool;
+#define bool _Bool
+#define false 0
+#define true 1
 
 extern I2C_HandleTypeDef hi2c1;
 
@@ -72,12 +77,15 @@ void Error_Handler(void);
 /* USER CODE BEGIN EFP */
 extern void aaa(void);
 extern double CurrentTime(void);
+extern void readBNOAnglesDeg(void);
 
 
 
 /* USER CODE END EFP */
 
 /* Private defines -----------------------------------------------------------*/
+#define Flash_WP_Pin GPIO_PIN_2
+#define Flash_WP_GPIO_Port GPIOE
 #define Flash_Reset_Pin GPIO_PIN_1
 #define Flash_Reset_GPIO_Port GPIOA
 #define USB_TX_Pin GPIO_PIN_2
