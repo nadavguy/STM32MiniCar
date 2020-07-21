@@ -198,6 +198,20 @@ int main(void)
 	HAL_ADC_Start(&hadc1);		// Battery
 //	HAL_TIM_IC_Init(&htim2);		//
 //	HAL_TIM_IC_Start(&htim2, TIM_CHANNEL_1);
+	RTC_TimeTypeDef LocalTime;
+	RTC_TimeTypeDef ReadTime;
+	RTC_DateTypeDef LocalDate;
+//	LocalTime.Hours = 0;
+//	LocalTime.Minutes = 0;
+//	LocalTime.Seconds = 0;
+//	LocalTime.SubSeconds = 0;
+//	LocalTime.SecondFraction = 255;
+//	LocalTime.TimeFormat = RTC_HOURFORMAT12_AM;
+//	LocalTime.DayLightSaving = RTC_DAYLIGHTSAVING_NONE;
+//	LocalTime.StoreOperation = RTC_STOREOPERATION_SET;
+
+
+//	HAL_RTC_SetTime(&hrtc, &LocalTime, FORMAT_BIN);
 
 
 //	vBat = measureBattery();
@@ -313,6 +327,13 @@ int main(void)
 		int PWMValue = 1000 * ((2 - 1) * (double)90.0  / (145.0 - 35.0) + 0.5);
 		start_pwm1(PWMValue); // Control Servo
 		start_pwm2(0*80); // Control Car Motor
+		HAL_Delay(1);
+		HAL_RTC_GetTime(&hrtc, &ReadTime, FORMAT_BIN);
+		HAL_RTC_GetDate(&hrtc, &LocalDate, FORMAT_BIN);
+		sprintf(USBTXArray, "%6.3f, %02d:%02d:%02d.%d\r\n",
+				CurrentTime(), ReadTime.Hours, ReadTime.Minutes, ReadTime.Seconds, (9999-ReadTime.SubSeconds)*1000/9999);
+		SendToScreen();
+//		HAL_RTCEx_GetTimeStamp(&hrtc, &ReadTime, &LocalDate, FORMAT_BIN);
 
 //		MeasuredRPM = RPMMeasurement();
     
@@ -339,9 +360,8 @@ void SystemClock_Config(void)
   __HAL_PWR_VOLTAGESCALING_CONFIG(PWR_REGULATOR_VOLTAGE_SCALE1);
   /** Initializes the CPU, AHB and APB busses clocks 
   */
-  RCC_OscInitStruct.OscillatorType = RCC_OSCILLATORTYPE_LSI|RCC_OSCILLATORTYPE_HSE;
+  RCC_OscInitStruct.OscillatorType = RCC_OSCILLATORTYPE_HSE;
   RCC_OscInitStruct.HSEState = RCC_HSE_ON;
-  RCC_OscInitStruct.LSIState = RCC_LSI_ON;
   RCC_OscInitStruct.PLL.PLLState = RCC_PLL_ON;
   RCC_OscInitStruct.PLL.PLLSource = RCC_PLLSOURCE_HSE;
   RCC_OscInitStruct.PLL.PLLM = 25;
@@ -375,7 +395,7 @@ void SystemClock_Config(void)
                               |RCC_PERIPHCLK_USART2|RCC_PERIPHCLK_UART5
                               |RCC_PERIPHCLK_I2C1|RCC_PERIPHCLK_SDMMC1
                               |RCC_PERIPHCLK_CLK48;
-  PeriphClkInitStruct.RTCClockSelection = RCC_RTCCLKSOURCE_LSI;
+  PeriphClkInitStruct.RTCClockSelection = RCC_RTCCLKSOURCE_HSE_DIV25;
   PeriphClkInitStruct.Usart2ClockSelection = RCC_USART2CLKSOURCE_PCLK1;
   PeriphClkInitStruct.Uart5ClockSelection = RCC_UART5CLKSOURCE_PCLK1;
   PeriphClkInitStruct.I2c1ClockSelection = RCC_I2C1CLKSOURCE_PCLK1;
@@ -545,8 +565,8 @@ static void MX_RTC_Init(void)
   */
   hrtc.Instance = RTC;
   hrtc.Init.HourFormat = RTC_HOURFORMAT_24;
-  hrtc.Init.AsynchPrediv = 127;
-  hrtc.Init.SynchPrediv = 255;
+  hrtc.Init.AsynchPrediv = 99;
+  hrtc.Init.SynchPrediv = 9999;
   hrtc.Init.OutPut = RTC_OUTPUT_DISABLE;
   hrtc.Init.OutPutPolarity = RTC_OUTPUT_POLARITY_HIGH;
   hrtc.Init.OutPutType = RTC_OUTPUT_TYPE_OPENDRAIN;
@@ -573,7 +593,7 @@ static void MX_RTC_Init(void)
   sDate.WeekDay = RTC_WEEKDAY_MONDAY;
   sDate.Month = RTC_MONTH_JANUARY;
   sDate.Date = 1;
-  sDate.Year = 0;
+  sDate.Year = 20;
 
   if (HAL_RTC_SetDate(&hrtc, &sDate, RTC_FORMAT_BIN) != HAL_OK)
   {
