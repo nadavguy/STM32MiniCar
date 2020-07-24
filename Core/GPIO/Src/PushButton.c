@@ -44,7 +44,7 @@ void CheckButton(void)
 			}
 			sprintf(USBTXArray, "%6.3f, Button press duration: %6.3f\r\n",
 					CurrentTime(), (HAL_GetTick() - ButtonPressStart) / 1000.0);
-			SendToScreen();
+			SendToScreen(false);
 		}
 		if (HAL_GetTick() - ButtonPressCycleStart > 3000)
 		{
@@ -52,14 +52,14 @@ void CheckButton(void)
 			{
 				//Do this
 				sprintf(USBTXArray, "%6.3f, Do this\r\n", CurrentTime());
-				SendToScreen();
+				SendToScreen(false);
 			}
 			else if ((ButtonPressDurationmSec[0] >= 1000)
 					&& (ButtonPressDurationmSec[1] >= 1000))
 			{
 				//Do that
 				sprintf(USBTXArray, "%6.3f, Do that\r\n", CurrentTime());
-				SendToScreen();
+				SendToScreen(false);
 			}
 			else if ((ButtonPressDurationmSec[0] >= 1000)
 					&& (ButtonPressDurationmSec[1] == 0))
@@ -67,14 +67,14 @@ void CheckButton(void)
 				//Do that
 				sprintf(USBTXArray, "%6.3f, Do that Single Press\r\n",
 						CurrentTime());
-				SendToScreen();
+				SendToScreen(false);
 			}
 			else if ((ButtonPressDurationmSec[0] >= 500)
 					&& (ButtonPressDurationmSec[1] >= 1000))
 			{
 				//Or maybe this
 				sprintf(USBTXArray, "%6.3f, Or maybe this\r\n", CurrentTime());
-				SendToScreen();
+				SendToScreen(false);
 
 			}
 			else if ((ButtonPressDurationmSec[0] >= 500)
@@ -82,7 +82,7 @@ void CheckButton(void)
 			{
 				//Or maybe that
 				sprintf(USBTXArray, "%6.3f, Or maybe that\r\n", CurrentTime());
-				SendToScreen();
+				SendToScreen(false);
 			}
 			ButtonCycle = 0;
 			memset(ButtonPressDurationmSec, 0, 20);

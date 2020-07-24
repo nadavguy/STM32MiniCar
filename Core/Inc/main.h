@@ -51,9 +51,14 @@ extern TIM_HandleTypeDef htim1;
 extern TIM_HandleTypeDef htim2;
 extern TIM_HandleTypeDef htim4;
 extern UART_HandleTypeDef huart2;
+extern UART_HandleTypeDef huart5;
 extern SPI_HandleTypeDef hspi1;
-extern char USBTXArray[1024];
-extern uint8_t UART5RXArray[128];
+extern uint8_t USBTXArray[1024];
+extern uint8_t UART5RXArray[256];
+extern uint8_t UART5TXArray[256];
+
+extern uint8_t CurrentAngle;
+extern uint8_t CurrentPower;
 
 extern bool isNewMagDataAvailable;
 
@@ -86,6 +91,8 @@ extern void readBNOAnglesDeg(void);
 /* Private defines -----------------------------------------------------------*/
 #define Flash_WP_Pin GPIO_PIN_2
 #define Flash_WP_GPIO_Port GPIOE
+#define AntiTamper_Pin GPIO_PIN_13
+#define AntiTamper_GPIO_Port GPIOC
 #define Flash_Reset_Pin GPIO_PIN_1
 #define Flash_Reset_GPIO_Port GPIOA
 #define USB_TX_Pin GPIO_PIN_2
@@ -108,6 +115,14 @@ extern void readBNOAnglesDeg(void);
 #define PWM4_J5_P4_GPIO_Port GPIOA
 #define PWM2_J1_P4_Pin GPIO_PIN_11
 #define PWM2_J1_P4_GPIO_Port GPIOA
+#define UART4_RX_J9_P3_Pin GPIO_PIN_0
+#define UART4_RX_J9_P3_GPIO_Port GPIOD
+#define UART4_TX_J9_P1_Pin GPIO_PIN_1
+#define UART4_TX_J9_P1_GPIO_Port GPIOD
+#define BNO_SCL_Pin GPIO_PIN_6
+#define BNO_SCL_GPIO_Port GPIOB
+#define BNO_SDA_Pin GPIO_PIN_7
+#define BNO_SDA_GPIO_Port GPIOB
 /* USER CODE BEGIN Private defines */
 extern unsigned int sysTickCounter;
 extern s32 comres;

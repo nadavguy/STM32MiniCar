@@ -4,6 +4,7 @@
 "Core/Inc/stm32f7xx_hal_sd.o"
 "Core/Peripherals/Src/FlashQSPIAgent.o"
 "Core/Peripherals/Src/LED.o"
+"Core/Peripherals/Src/SerialAgent.o"
 "Core/Peripherals/Src/bno055.o"
 "Core/Peripherals/Src/bno055_support.o"
 "Core/Peripherals/Src/ms5611.o"

@@ -37,6 +37,7 @@
 #include "PushButton.h"
 #include "FlashQSPIAgent.h"
 #include "bno055_support.h"
+#include "SerialAgent.h"
 //#include "includes.h"
 //#include "typedefs.h"
 /* USER CODE END Includes */
@@ -72,15 +73,18 @@ TIM_HandleTypeDef htim1;
 TIM_HandleTypeDef htim2;
 TIM_HandleTypeDef htim4;
 
+UART_HandleTypeDef huart4;
 UART_HandleTypeDef huart5;
 UART_HandleTypeDef huart2;
+DMA_HandleTypeDef hdma_uart5_rx;
 DMA_HandleTypeDef hdma_usart2_rx;
 DMA_HandleTypeDef hdma_usart2_tx;
 
 /* USER CODE BEGIN PV */
-uint8_t USBRXArray[1024] = { 0 };
-uint8_t UART5RXArray[128] = { 0 };
-char USBTXArray[1024] = "";
+uint8_t USBRXArray[1024] = {0};
+uint8_t UART5RXArray[256] = {0};
+uint8_t UART5TXArray[256] = {0};
+uint8_t USBTXArray[1024] = "";
 
 char TerminalBuffer[1024] = "";
 
@@ -119,9 +123,16 @@ uint16_t SpeedCounter = 0;
 uint16_t MeasuredRPM = 0;
 
 uint32_t LastRPMCycle = 0;
+uint32_t NumberOfByteRet = 0;
+uint32_t LastBLERead = 0;
 
 uint8_t MID = 0;
 uint8_t DID = 0;
+uint8_t FinalAngle = 0;
+uint8_t FinalPower = 0;
+uint8_t CurrentAngle = 0;
+uint8_t CurrentPower = 0;
+uint8_t ret = 0;
 
 HAL_StatusTypeDef ret;
 /* USER CODE END PV */
@@ -141,6 +152,7 @@ static void MX_ADC1_Init(void);
 static void MX_RTC_Init(void);
 static void MX_TIM2_Init(void);
 static void MX_UART5_Init(void);
+static void MX_UART4_Init(void);
 /* USER CODE BEGIN PFP */
 
 double measureBattery();
@@ -158,7 +170,7 @@ double measureBattery();
 int main(void)
 {
   /* USER CODE BEGIN 1 */
-//SCB->VTOR = 0x8020000;
+  //SCB->VTOR = 0x8020000;
   /* USER CODE END 1 */
 
   /* MCU Configuration--------------------------------------------------------*/
@@ -192,152 +204,169 @@ int main(void)
   MX_RTC_Init();
   MX_TIM2_Init();
   MX_UART5_Init();
+  MX_UART4_Init();
   /* USER CODE BEGIN 2 */
-	HAL_TIM_PWM_Init(&htim1);	// PWM Generation Servos
-	HAL_TIM_PWM_Init(&htim4); 	// LED
-	HAL_ADC_Start(&hadc1);		// Battery
-//	HAL_TIM_IC_Init(&htim2);		//
-//	HAL_TIM_IC_Start(&htim2, TIM_CHANNEL_1);
-	RTC_TimeTypeDef LocalTime;
-	RTC_TimeTypeDef ReadTime;
-	RTC_DateTypeDef LocalDate;
-//	LocalTime.Hours = 0;
-//	LocalTime.Minutes = 0;
-//	LocalTime.Seconds = 0;
-//	LocalTime.SubSeconds = 0;
-//	LocalTime.SecondFraction = 255;
-//	LocalTime.TimeFormat = RTC_HOURFORMAT12_AM;
-//	LocalTime.DayLightSaving = RTC_DAYLIGHTSAVING_NONE;
-//	LocalTime.StoreOperation = RTC_STOREOPERATION_SET;
+  HAL_TIM_PWM_Init(&htim1); // PWM Generation Servos
+  HAL_TIM_PWM_Init(&htim4); // LED
+  HAL_ADC_Start(&hadc1);    // Battery
+                            //	HAL_TIM_IC_Init(&htim2);		//
+                            //	HAL_TIM_IC_Start(&htim2, TIM_CHANNEL_1);
+  RTC_TimeTypeDef LocalTime;
+  RTC_TimeTypeDef ReadTime;
+  RTC_DateTypeDef LocalDate;
 
 
-//	HAL_RTC_SetTime(&hrtc, &LocalTime, FORMAT_BIN);
+  //	vBat = measureBattery();
+  //
+  //	MS56XXInit();
 
+  //	HAL_GPIO_WritePin(GPIOC, GPIO_PIN_11, GPIO_PIN_RESET); 	// QSPI CS Low
+  //	HAL_Delay(15);
+  HAL_GPIO_WritePin(GPIOE, GPIO_PIN_2, GPIO_PIN_SET); // QSPI WP High
+  HAL_Delay(15);
+  HAL_GPIO_WritePin(GPIOA, GPIO_PIN_1, GPIO_PIN_RESET); // QSPI RST High
+  HAL_Delay(1);
+  HAL_GPIO_WritePin(GPIOA, GPIO_PIN_1, GPIO_PIN_SET); // QSPI RST High
+  HAL_Delay(15);
 
-//	vBat = measureBattery();
+  QSPI_Init();
+//  Flash example
+//  QSPI_Read_Status_registers(&hqspi, &RR1, &RR2, &RR3);
+//  RR2 = 0x22;
+//  RR3 = 0x60;
+//  QSPI_Reset_Status_registers(&hqspi, &RR1, &RR2, &RR3);
+//  HAL_Delay(40);
+//  QSPI_READMD(&MID, &DID);
 //
-//	MS56XXInit();
+//  QSPI_Read_Status_registers(&hqspi, &RR1, &RR2, &RR3);
+//  do
+//  {
+//    HAL_Delay(1);
+//    FS_ret2 = f_mount(&USERFatFS, "\\", 0);
+//  } while (FS_ret2 != FR_OK);
+//
+//  DWORD free_clusters, free_sectors, total_sectors;
+//
+//  FATFS *getFreeFs;
+//  uint8_t buffer[_MAX_SS];
+//  FS_ret2 = f_getfree("\\", &free_clusters, &getFreeFs);
+//  if (FS_ret2 != FR_OK)
+//  {
+//    FS_ret2 = f_mkfs("\\", FM_FAT, 0, buffer, sizeof(buffer));
+//    //		while (1);
+//  }
+//
+//  total_sectors = (getFreeFs->n_fatent - 2) * getFreeFs->csize;
+//  free_sectors = free_clusters * getFreeFs->csize;
+//
+//  do
+//  {
+//    HAL_Delay(1);
+//    FS_ret2 = f_open(&USERFile, "Index.txt", FA_READ);
+//  } while (FS_ret2 != FR_OK);
+//
+//  unsigned int br = 0;
+//  FS_ret2 = f_read(&USERFile, &FileReadBuffer, sizeof(FileReadBuffer), &br);
+  //	BNOInit();
 
-//	HAL_GPIO_WritePin(GPIOC, GPIO_PIN_11, GPIO_PIN_RESET); 	// QSPI CS Low
-//	HAL_Delay(15);
-	HAL_GPIO_WritePin(GPIOE, GPIO_PIN_2, GPIO_PIN_SET); 	// QSPI WP High
-	HAL_Delay(15);
-	HAL_GPIO_WritePin(GPIOA, GPIO_PIN_1, GPIO_PIN_RESET);		// QSPI RST High
-	HAL_Delay(1);
-	HAL_GPIO_WritePin(GPIOA, GPIO_PIN_1, GPIO_PIN_SET);		// QSPI RST High
-	HAL_Delay(15);
-
-	  QSPI_Init();
-
-	  QSPI_Read_Status_registers(&hqspi, &RR1, &RR2, &RR3);
-	  RR2 = 0x22;
-	  RR3 = 0x60;
-	  QSPI_Reset_Status_registers(&hqspi, &RR1,  &RR2, &RR3);
-	  HAL_Delay(40);
-	  QSPI_READMD(&MID,&DID);
-
-
-	  QSPI_Read_Status_registers(&hqspi, &RR1, &RR2, &RR3);
-	do
-	{
-		HAL_Delay(1);
-		FS_ret2 = f_mount(&USERFatFS, "\\", 0);
-	} while (FS_ret2 != FR_OK);
-
-	DWORD free_clusters, free_sectors, total_sectors;
-
-	FATFS *getFreeFs;
-	uint8_t buffer[_MAX_SS];
-	FS_ret2 = f_getfree("\\", &free_clusters, &getFreeFs);
-	if (FS_ret2 != FR_OK)
-	{
-		FS_ret2 = f_mkfs("\\", FM_FAT, 0, buffer, sizeof(buffer));
-//		while (1);
-	}
-
-	total_sectors = (getFreeFs->n_fatent - 2) * getFreeFs->csize;
-	free_sectors = free_clusters * getFreeFs->csize;
-
-	do
-	{
-		HAL_Delay(1);
-		FS_ret2 = f_open(&USERFile, "Index.txt", FA_READ);
-	} while (FS_ret2 != FR_OK);
-
-	unsigned int br =0;
-	FS_ret2 = f_read(&USERFile, &FileReadBuffer, sizeof(FileReadBuffer), &br);
-//	BNOInit();
-
-	vBat = measureBattery();
-	MS56XXInit();
-	BNOInit();
+  vBat = measureBattery();
+  MS56XXInit();
+  BNOInit();
   led_init();
 
-//	readBNOAnglesDeg();
-	//Read Data from terminal - Example
-	HAL_UART_Receive_DMA(&huart2, USBRXArray, 1024);
-	//Write Data to terminal - Example
-	ret = HAL_UART_Transmit_DMA(&huart2, USBTXArray, 1024);
+  //	readBNOAnglesDeg();
+  //Read Data from terminal - Example
+  HAL_UART_Receive_DMA(&huart2, USBRXArray, 1024);
+  //Write Data to terminal - Example
+//  ret = HAL_UART_Transmit_DMA(&huart2, USBTXArray, 1024);
 
-	HAL_UART_Receive_DMA(&huart5, UART5RXArray, 128);
+//  HAL_UART_Receive_DMA(&huart5, UART5RXArray, 150);
+//  NumberOfByteRet = CheckDataFromUART();
+  LastBLERead = HAL_GetTick();
+  HAL_Delay(100);
 
   /* USER CODE END 2 */
 
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
-	while (1)
-	{
+  while (1)
+  {
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
-//		readBNOAnglesDeg();
-//		if ((fabs(Roll) < 30) && (fabs(Pitch) < 30))
-//		{
-//			SetRGB(0, 250, 0);
-//		} else if ((fabs(Roll) < 65) && (fabs(Pitch) < 65))
-//		{
-//			SetRGB(250, 250, 0);
-//		} else
-//		{
-//			SetRGB(250, 0, 0);
-//		}
-//		sprintf(USBTXArray, "%6.3f, Roll: %6.3f, Pitch: %6.3f, Yaw: %6.3f\r\n",
-//				CurrentTime(), Roll, Pitch, Yaw);
-//		SendToScreen();
+    //		readBNOAnglesDeg();
+    //		if ((fabs(Roll) < 30) && (fabs(Pitch) < 30))
+    //		{
+    //			SetRGB(0, 250, 0);
+    //		} else if ((fabs(Roll) < 65) && (fabs(Pitch) < 65))
+    //		{
+    //			SetRGB(250, 250, 0);
+    //		} else
+    //		{
+    //			SetRGB(250, 0, 0);
+    //		}
+    //		sprintf(USBTXArray, "%6.3f, Roll: %6.3f, Pitch: %6.3f, Yaw: %6.3f\r\n",
+    //				CurrentTime(), Roll, Pitch, Yaw);
+    //		SendToScreen();
 
-		MS56XXCyclicRead();
-//		if (isNewMS56XXDataAvailable)
-//		{
-//			sprintf(USBTXArray, "%6.3f, Pressure: %d, Temp: %d\r\n",
-//					CurrentTime(), P, TEMP);
-//			SendToScreen();
-//		}
+//    MS56XXCyclicRead();
+    //		if (isNewMS56XXDataAvailable)
+    //		{
+    //			sprintf(USBTXArray, "%6.3f, Pressure: %d, Temp: %d\r\n",
+    //					CurrentTime(), P, TEMP);
+    //			SendToScreen();
+    //		}
 
-		CheckButton();
-		readBNOMagnetometer();
+//    CheckButton();
+//    readBNOMagnetometer();
 
-		if (isNewMagDataAvailable)
-		{
-			sprintf(USBTXArray, "%6.3f, MagX: %6.3f, MagY: %6.3f, MagZ: %6.3f\r\n",
-								CurrentTime(), d_mag_xyz.x, d_mag_xyz.y, d_mag_xyz.z);
-						SendToScreen();
-		}
+//    if (isNewMagDataAvailable)
+//    {
+//      sprintf(USBTXArray, "%6.3f, MagX: %6.3f, MagY: %6.3f, MagZ: %6.3f\r\n",
+//              CurrentTime(), d_mag_xyz.x, d_mag_xyz.y, d_mag_xyz.z);
+//      SendToScreen();
+//    }
 
-		ParseRCMessage(UART5RXArray);
-		int PWMValue = 1000 * ((2 - 1) * (double)90.0  / (145.0 - 35.0) + 0.5);
-		start_pwm1(PWMValue); // Control Servo
-		start_pwm2(0*80); // Control Car Motor
-		HAL_Delay(1);
-		HAL_RTC_GetTime(&hrtc, &ReadTime, FORMAT_BIN);
-		HAL_RTC_GetDate(&hrtc, &LocalDate, FORMAT_BIN);
-		sprintf(USBTXArray, "%6.3f, %02d:%02d:%02d.%d\r\n",
-				CurrentTime(), ReadTime.Hours, ReadTime.Minutes, ReadTime.Seconds, (9999-ReadTime.SubSeconds)*1000/9999);
-		SendToScreen();
-//		HAL_RTCEx_GetTimeStamp(&hrtc, &ReadTime, &LocalDate, FORMAT_BIN);
+//    example RTC
+//    HAL_Delay(1);
+//    HAL_RTC_GetTime(&hrtc, &ReadTime, FORMAT_BIN);
+//    HAL_RTC_GetDate(&hrtc, &LocalDate, FORMAT_BIN);
+//    sprintf(USBTXArray, "%6.3f, %02d:%02d:%02d.%03d\r\n",
+//            CurrentTime(), ReadTime.Hours, ReadTime.Minutes, ReadTime.Seconds, (9999 - ReadTime.SubSeconds) * 1000 / 9999);
+//    SendToScreen();
+    //		HAL_RTCEx_GetTimeStamp(&hrtc, &ReadTime, &LocalDate, FORMAT_BIN);
 
-//		MeasuredRPM = RPMMeasurement();
-    
-	}
+    //		MeasuredRPM = RPMMeasurement();
+//    LastRPMCycle++;
+//    sprintf(UART5TXArray, "%d\r\n",LastRPMCycle);
+//    HAL_UART_Transmit(&huart5,UART5TXArray, 256, 1);
+//    HAL_Delay(5);
+
+    if (HAL_GetTick() - LastBLERead >= 100)
+    {
+    	LastBLERead = HAL_GetTick();
+    	NumberOfByteRet = CheckDataFromUART();
+    	ret = ParseRFMessage(&CurrentAngle, &CurrentPower);
+    	FinalAngle = CurrentAngle * (1 - ret) + FinalAngle * ret;
+    	FinalPower = CurrentPower * (1 - ret) + FinalPower * ret;
+
+    	////			  sprintf(USBTXArray, "%6.3f, ",CurrentTime());
+    	////			  SendToScreen(false);
+    	////			  memcpy(USBTXArray,UART5RXArray,NumberOfByteRet);
+    	////			  SendToScreen(true);
+    	////			  sprintf(USBTXArray,"Length of string a = %d \n",strlen(UART5RXArray));
+    	////			  SendToScreen(true);
+    	//			  sprintf(USBTXArray,"%6.3f, Angle: %d, Power: %d ret: %d \r\n",CurrentTime(), CurrentAngle, CurrentPower, ret);
+    	//			  SendToScreen(false);
+    	sprintf(USBTXArray,"%6.3f, FAngle: %d, FPower: %d ret: %d \r\n",CurrentTime(), FinalAngle, FinalPower, ret);
+    	SendToScreen(false);
+    }
+        int PWMValue = 1000 * ((2 - 1) * (double)FinalAngle / (145.0 - 35.0) + 0.5);
+        start_pwm1(PWMValue); // Control Servo
+        start_pwm2(FinalPower * 80);   // Control Car Motor
+
+    //
+  }
   /* USER CODE END 3 */
 }
 
@@ -392,11 +421,12 @@ void SystemClock_Config(void)
     Error_Handler();
   }
   PeriphClkInitStruct.PeriphClockSelection = RCC_PERIPHCLK_TIM|RCC_PERIPHCLK_RTC
-                              |RCC_PERIPHCLK_USART2|RCC_PERIPHCLK_UART5
-                              |RCC_PERIPHCLK_I2C1|RCC_PERIPHCLK_SDMMC1
-                              |RCC_PERIPHCLK_CLK48;
+                              |RCC_PERIPHCLK_USART2|RCC_PERIPHCLK_UART4
+                              |RCC_PERIPHCLK_UART5|RCC_PERIPHCLK_I2C1
+                              |RCC_PERIPHCLK_SDMMC1|RCC_PERIPHCLK_CLK48;
   PeriphClkInitStruct.RTCClockSelection = RCC_RTCCLKSOURCE_HSE_DIV25;
   PeriphClkInitStruct.Usart2ClockSelection = RCC_USART2CLKSOURCE_PCLK1;
+  PeriphClkInitStruct.Uart4ClockSelection = RCC_UART4CLKSOURCE_PCLK1;
   PeriphClkInitStruct.Uart5ClockSelection = RCC_UART5CLKSOURCE_PCLK1;
   PeriphClkInitStruct.I2c1ClockSelection = RCC_I2C1CLKSOURCE_PCLK1;
   PeriphClkInitStruct.Clk48ClockSelection = RCC_CLK48SOURCE_PLL;
@@ -576,7 +606,7 @@ static void MX_RTC_Init(void)
   }
 
   /* USER CODE BEGIN Check_RTC_BKUP */
-    
+
   /* USER CODE END Check_RTC_BKUP */
 
   /** Initialize RTC and set the Time and Date 
@@ -870,6 +900,41 @@ static void MX_TIM4_Init(void)
 }
 
 /**
+  * @brief UART4 Initialization Function
+  * @param None
+  * @retval None
+  */
+static void MX_UART4_Init(void)
+{
+
+  /* USER CODE BEGIN UART4_Init 0 */
+
+  /* USER CODE END UART4_Init 0 */
+
+  /* USER CODE BEGIN UART4_Init 1 */
+
+  /* USER CODE END UART4_Init 1 */
+  huart4.Instance = UART4;
+  huart4.Init.BaudRate = 9600;
+  huart4.Init.WordLength = UART_WORDLENGTH_8B;
+  huart4.Init.StopBits = UART_STOPBITS_2;
+  huart4.Init.Parity = UART_PARITY_NONE;
+  huart4.Init.Mode = UART_MODE_TX_RX;
+  huart4.Init.HwFlowCtl = UART_HWCONTROL_NONE;
+  huart4.Init.OverSampling = UART_OVERSAMPLING_16;
+  huart4.Init.OneBitSampling = UART_ONE_BIT_SAMPLE_DISABLE;
+  huart4.AdvancedInit.AdvFeatureInit = UART_ADVFEATURE_NO_INIT;
+  if (HAL_UART_Init(&huart4) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  /* USER CODE BEGIN UART4_Init 2 */
+
+  /* USER CODE END UART4_Init 2 */
+
+}
+
+/**
   * @brief UART5 Initialization Function
   * @param None
   * @retval None
@@ -891,9 +956,10 @@ static void MX_UART5_Init(void)
   huart5.Init.Parity = UART_PARITY_NONE;
   huart5.Init.Mode = UART_MODE_TX_RX;
   huart5.Init.HwFlowCtl = UART_HWCONTROL_NONE;
-  huart5.Init.OverSampling = UART_OVERSAMPLING_16;
+  huart5.Init.OverSampling = UART_OVERSAMPLING_8;
   huart5.Init.OneBitSampling = UART_ONE_BIT_SAMPLE_DISABLE;
-  huart5.AdvancedInit.AdvFeatureInit = UART_ADVFEATURE_NO_INIT;
+  huart5.AdvancedInit.AdvFeatureInit = UART_ADVFEATURE_RXOVERRUNDISABLE_INIT;
+  huart5.AdvancedInit.OverrunDisable = UART_ADVFEATURE_OVERRUN_DISABLE;
   if (HAL_UART_Init(&huart5) != HAL_OK)
   {
     Error_Handler();
@@ -928,7 +994,8 @@ static void MX_USART2_UART_Init(void)
   huart2.Init.HwFlowCtl = UART_HWCONTROL_NONE;
   huart2.Init.OverSampling = UART_OVERSAMPLING_16;
   huart2.Init.OneBitSampling = UART_ONE_BIT_SAMPLE_DISABLE;
-  huart2.AdvancedInit.AdvFeatureInit = UART_ADVFEATURE_NO_INIT;
+  huart2.AdvancedInit.AdvFeatureInit = UART_ADVFEATURE_RXOVERRUNDISABLE_INIT;
+  huart2.AdvancedInit.OverrunDisable = UART_ADVFEATURE_OVERRUN_DISABLE;
   if (HAL_UART_Init(&huart2) != HAL_OK)
   {
     Error_Handler();
@@ -949,6 +1016,9 @@ static void MX_DMA_Init(void)
   __HAL_RCC_DMA1_CLK_ENABLE();
 
   /* DMA interrupt init */
+  /* DMA1_Stream0_IRQn interrupt configuration */
+  HAL_NVIC_SetPriority(DMA1_Stream0_IRQn, 0, 0);
+  HAL_NVIC_EnableIRQ(DMA1_Stream0_IRQn);
   /* DMA1_Stream5_IRQn interrupt configuration */
   HAL_NVIC_SetPriority(DMA1_Stream5_IRQn, 0, 0);
   HAL_NVIC_EnableIRQ(DMA1_Stream5_IRQn);
@@ -1003,12 +1073,12 @@ static void MX_GPIO_Init(void)
   GPIO_InitStruct.Pull = GPIO_NOPULL;
   HAL_GPIO_Init(GPIOE, &GPIO_InitStruct);
 
-  /*Configure GPIO pins : PC13 PC0 PC1 PC2 
-                           PC4 PC5 PC6 PC7 
-                           PC9 PC10 */
-  GPIO_InitStruct.Pin = GPIO_PIN_13|GPIO_PIN_0|GPIO_PIN_1|GPIO_PIN_2 
-                          |GPIO_PIN_4|GPIO_PIN_5|GPIO_PIN_6|GPIO_PIN_7 
-                          |GPIO_PIN_9|GPIO_PIN_10;
+  /*Configure GPIO pins : PC0 PC1 PC2 PC4 
+                           PC5 PC6 PC7 PC9 
+                           PC10 */
+  GPIO_InitStruct.Pin = GPIO_PIN_0|GPIO_PIN_1|GPIO_PIN_2|GPIO_PIN_4 
+                          |GPIO_PIN_5|GPIO_PIN_6|GPIO_PIN_7|GPIO_PIN_9 
+                          |GPIO_PIN_10;
   GPIO_InitStruct.Mode = GPIO_MODE_ANALOG;
   GPIO_InitStruct.Pull = GPIO_NOPULL;
   HAL_GPIO_Init(GPIOC, &GPIO_InitStruct);
@@ -1050,11 +1120,11 @@ static void MX_GPIO_Init(void)
   HAL_GPIO_Init(GPIOB, &GPIO_InitStruct);
 
   /*Configure GPIO pins : PD8 PD9 PD10 PD11 
-                           PD14 PD0 PD1 PD3 
-                           PD4 PD5 PD6 PD7 */
+                           PD14 PD3 PD4 PD5 
+                           PD6 PD7 */
   GPIO_InitStruct.Pin = GPIO_PIN_8|GPIO_PIN_9|GPIO_PIN_10|GPIO_PIN_11 
-                          |GPIO_PIN_14|GPIO_PIN_0|GPIO_PIN_1|GPIO_PIN_3 
-                          |GPIO_PIN_4|GPIO_PIN_5|GPIO_PIN_6|GPIO_PIN_7;
+                          |GPIO_PIN_14|GPIO_PIN_3|GPIO_PIN_4|GPIO_PIN_5 
+                          |GPIO_PIN_6|GPIO_PIN_7;
   GPIO_InitStruct.Mode = GPIO_MODE_ANALOG;
   GPIO_InitStruct.Pull = GPIO_NOPULL;
   HAL_GPIO_Init(GPIOD, &GPIO_InitStruct);
@@ -1064,13 +1134,13 @@ static void MX_GPIO_Init(void)
 /* USER CODE BEGIN 4 */
 double CurrentTime(void)
 {
-	return HAL_GetTick() / 1000.0;
+  return HAL_GetTick() / 1000.0;
 }
 
 double measureBattery()
 {
-	uint32_t D = HAL_ADC_GetValue(&hadc1);
-	return 2 * 3.3 * D / 4096.0;
+  uint32_t D = HAL_ADC_GetValue(&hadc1);
+  return 2 * 3.3 * D / 4096.0;
 }
 
 /* USER CODE END 4 */
@@ -1082,7 +1152,7 @@ double measureBattery()
 void Error_Handler(void)
 {
   /* USER CODE BEGIN Error_Handler_Debug */
-	/* User can add his own implementation to report the HAL error return state */
+  /* User can add his own implementation to report the HAL error return state */
 
   /* USER CODE END Error_Handler_Debug */
 }
