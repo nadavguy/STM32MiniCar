@@ -53,9 +53,10 @@ extern TIM_HandleTypeDef htim4;
 extern UART_HandleTypeDef huart2;
 extern UART_HandleTypeDef huart5;
 extern SPI_HandleTypeDef hspi1;
-extern uint8_t USBTXArray[1024];
-extern uint8_t UART5RXArray[256];
-extern uint8_t UART5TXArray[256];
+extern char USBTXArray[1024];
+extern char USBRXArray[1024];
+extern char UART5RXArray[256];
+extern char UART5TXArray[256];
 
 extern uint8_t CurrentAngle;
 extern uint8_t CurrentPower;

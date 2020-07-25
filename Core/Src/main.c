@@ -81,10 +81,10 @@ DMA_HandleTypeDef hdma_usart2_rx;
 DMA_HandleTypeDef hdma_usart2_tx;
 
 /* USER CODE BEGIN PV */
-uint8_t USBRXArray[1024] = {0};
-uint8_t UART5RXArray[256] = {0};
-uint8_t UART5TXArray[256] = {0};
-uint8_t USBTXArray[1024] = "";
+char USBRXArray[1024] = {0};
+char UART5RXArray[256] = {0};
+char UART5TXArray[256] = {0};
+char USBTXArray[1024] = "";
 
 char TerminalBuffer[1024] = "";
 
@@ -125,16 +125,18 @@ uint16_t MeasuredRPM = 0;
 uint32_t LastRPMCycle = 0;
 uint32_t NumberOfByteRet = 0;
 uint32_t LastBLERead = 0;
+uint32_t BytesWritten = 0;
 
 uint8_t MID = 0;
 uint8_t DID = 0;
-uint8_t FinalAngle = 0;
+uint8_t FinalAngle = 90;
 uint8_t FinalPower = 0;
 uint8_t CurrentAngle = 0;
 uint8_t CurrentPower = 0;
 uint8_t ret = 0;
 
 HAL_StatusTypeDef ret;
+RTC_TamperTypeDef LocalsTamper;
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -187,6 +189,7 @@ int main(void)
 
   /* USER CODE BEGIN SysInit */
 
+
   /* USER CODE END SysInit */
 
   /* Initialize all configured peripherals */
@@ -223,61 +226,66 @@ int main(void)
   //	HAL_GPIO_WritePin(GPIOC, GPIO_PIN_11, GPIO_PIN_RESET); 	// QSPI CS Low
   //	HAL_Delay(15);
   HAL_GPIO_WritePin(GPIOE, GPIO_PIN_2, GPIO_PIN_SET); // QSPI WP High
-  HAL_Delay(15);
+  HAL_Delay(1);
   HAL_GPIO_WritePin(GPIOA, GPIO_PIN_1, GPIO_PIN_RESET); // QSPI RST High
   HAL_Delay(1);
   HAL_GPIO_WritePin(GPIOA, GPIO_PIN_1, GPIO_PIN_SET); // QSPI RST High
-  HAL_Delay(15);
+  HAL_Delay(2);
 
   QSPI_Init();
 //  Flash example
-//  QSPI_Read_Status_registers(&hqspi, &RR1, &RR2, &RR3);
-//  RR2 = 0x22;
-//  RR3 = 0x60;
-//  QSPI_Reset_Status_registers(&hqspi, &RR1, &RR2, &RR3);
-//  HAL_Delay(40);
-//  QSPI_READMD(&MID, &DID);
-//
-//  QSPI_Read_Status_registers(&hqspi, &RR1, &RR2, &RR3);
-//  do
-//  {
-//    HAL_Delay(1);
-//    FS_ret2 = f_mount(&USERFatFS, "\\", 0);
-//  } while (FS_ret2 != FR_OK);
-//
-//  DWORD free_clusters, free_sectors, total_sectors;
-//
-//  FATFS *getFreeFs;
-//  uint8_t buffer[_MAX_SS];
-//  FS_ret2 = f_getfree("\\", &free_clusters, &getFreeFs);
-//  if (FS_ret2 != FR_OK)
-//  {
-//    FS_ret2 = f_mkfs("\\", FM_FAT, 0, buffer, sizeof(buffer));
-//    //		while (1);
-//  }
-//
-//  total_sectors = (getFreeFs->n_fatent - 2) * getFreeFs->csize;
-//  free_sectors = free_clusters * getFreeFs->csize;
-//
-//  do
-//  {
-//    HAL_Delay(1);
-//    FS_ret2 = f_open(&USERFile, "Index.txt", FA_READ);
-//  } while (FS_ret2 != FR_OK);
-//
-//  unsigned int br = 0;
-//  FS_ret2 = f_read(&USERFile, &FileReadBuffer, sizeof(FileReadBuffer), &br);
-  //	BNOInit();
+  QSPI_Read_Status_registers(&hqspi, &RR1, &RR2, &RR3);
+  RR2 = 0x22;
+  RR3 = 0x60;
+  QSPI_Reset_Status_registers(&hqspi, &RR1, &RR2, &RR3);
+  HAL_Delay(40);
+  QSPI_READMD(&MID, &DID);
+
+  QSPI_Read_Status_registers(&hqspi, &RR1, &RR2, &RR3);
+  do
+  {
+    HAL_Delay(1);
+    FS_ret2 = f_mount(&USERFatFS, "\\", 0);
+  } while (FS_ret2 != FR_OK);
+
+  DWORD free_clusters, free_sectors, total_sectors;
+
+  FATFS *getFreeFs;
+  uint8_t buffer[_MAX_SS];
+  FS_ret2 = f_getfree("\\", &free_clusters, &getFreeFs);
+  if (FS_ret2 != FR_OK)
+  {
+    FS_ret2 = f_mkfs("\\", FM_FAT, 0, buffer, sizeof(buffer));
+  }
+
+  total_sectors = (getFreeFs->n_fatent - 2) * getFreeFs->csize;
+  free_sectors = free_clusters * getFreeFs->csize;
+
+  do
+  {
+    HAL_Delay(1);
+    FS_ret2 = f_open(&USERFile, "Test.txt", FA_READ | FA_CREATE_ALWAYS);
+  } while ( (FS_ret2 != FR_OK) );
+
+  unsigned int br = 0;
+  FS_ret2 = f_read(&USERFile, &FileReadBuffer, sizeof(FileReadBuffer), &br);
 
   vBat = measureBattery();
   MS56XXInit();
   BNOInit();
   led_init();
+  SetRGB(0, 250, 0);
 
-  //	readBNOAnglesDeg();
-  //Read Data from terminal - Example
-  HAL_UART_Receive_DMA(&huart2, USBRXArray, 1024);
-  //Write Data to terminal - Example
+//  LocalsTamper.Trigger = RTC_TAMPERTRIGGER_FALLINGEDGE;
+//  LocalsTamper.Tamper = RTC_TAMPER_1;
+//  LocalsTamper.TamperPullUp = RTC_TAMPER_PULLUP_ENABLE;
+//  LocalsTamper.Interrupt = RTC_TAMPER1_INTERRUPT;
+//  HAL_RTCEx_SetTamper(&hrtc, &LocalsTamper);
+
+//  readBNOAnglesDeg();
+//  Read Data from terminal - Example
+//  HAL_UART_Receive_DMA(&huart2, USBRXArray, 1024);
+//  Write Data to terminal - Example
 //  ret = HAL_UART_Transmit_DMA(&huart2, USBTXArray, 1024);
 
 //  HAL_UART_Receive_DMA(&huart5, UART5RXArray, 150);
@@ -294,30 +302,32 @@ int main(void)
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
-    //		readBNOAnglesDeg();
-    //		if ((fabs(Roll) < 30) && (fabs(Pitch) < 30))
-    //		{
-    //			SetRGB(0, 250, 0);
-    //		} else if ((fabs(Roll) < 65) && (fabs(Pitch) < 65))
-    //		{
-    //			SetRGB(250, 250, 0);
-    //		} else
-    //		{
-    //			SetRGB(250, 0, 0);
-    //		}
-    //		sprintf(USBTXArray, "%6.3f, Roll: %6.3f, Pitch: %6.3f, Yaw: %6.3f\r\n",
-    //				CurrentTime(), Roll, Pitch, Yaw);
-    //		SendToScreen();
+//	  readBNOAnglesDeg();
+//	  if ((fabs(Roll) < 30) && (fabs(Pitch) < 30))
+//	  {
+//		  SetRGB(0, 250, 0);
+//	  } else if ((fabs(Roll) < 65) && (fabs(Pitch) < 65))
+//	  {
+//		  SetRGB(250, 250, 0);
+//	  } else
+//	  {
+//		  SetRGB(250, 0, 0);
+//	  }
+//	  sprintf(USBTXArray, "%6.3f, Roll: %6.3f, Pitch: %6.3f, Yaw: %6.3f\r\n",
+//			  CurrentTime(), Roll, Pitch, Yaw);
+//	  SendToScreen();
 
-//    MS56XXCyclicRead();
-    //		if (isNewMS56XXDataAvailable)
-    //		{
-    //			sprintf(USBTXArray, "%6.3f, Pressure: %d, Temp: %d\r\n",
-    //					CurrentTime(), P, TEMP);
-    //			SendToScreen();
-    //		}
+	  MS56XXCyclicRead();
+	  if (isNewMS56XXDataAvailable)
+	  {
+//		  sprintf(USBTXArray, "%6.3f, Pressure: %d, Temp: %d\r\n",
+//				  CurrentTime(), P, TEMP);
+		  ret = strlen(USBTXArray);
+//		  FS_ret2 = f_write(&USERFile, USBTXArray, strlen(USBTXArray), &BytesWritten);
+		  SendToScreen(false);
+	  }
 
-//    CheckButton();
+    CheckButton();
 //    readBNOMagnetometer();
 
 //    if (isNewMagDataAvailable)
@@ -334,36 +344,44 @@ int main(void)
 //    sprintf(USBTXArray, "%6.3f, %02d:%02d:%02d.%03d\r\n",
 //            CurrentTime(), ReadTime.Hours, ReadTime.Minutes, ReadTime.Seconds, (9999 - ReadTime.SubSeconds) * 1000 / 9999);
 //    SendToScreen();
-    //		HAL_RTCEx_GetTimeStamp(&hrtc, &ReadTime, &LocalDate, FORMAT_BIN);
+//	  HAL_RTCEx_GetTimeStamp(&hrtc, &ReadTime, &LocalDate, FORMAT_BIN);
 
-    //		MeasuredRPM = RPMMeasurement();
+//	  MeasuredRPM = RPMMeasurement();
 //    LastRPMCycle++;
 //    sprintf(UART5TXArray, "%d\r\n",LastRPMCycle);
-//    HAL_UART_Transmit(&huart5,UART5TXArray, 256, 1);
-//    HAL_Delay(5);
 
+//	Read Sticks messages received through BlueTooth unit
     if (HAL_GetTick() - LastBLERead >= 100)
     {
+        getCMD();
     	LastBLERead = HAL_GetTick();
     	NumberOfByteRet = CheckDataFromUART();
     	ret = ParseRFMessage(&CurrentAngle, &CurrentPower);
     	FinalAngle = CurrentAngle * (1 - ret) + FinalAngle * ret;
     	FinalPower = CurrentPower * (1 - ret) + FinalPower * ret;
-
-    	////			  sprintf(USBTXArray, "%6.3f, ",CurrentTime());
-    	////			  SendToScreen(false);
-    	////			  memcpy(USBTXArray,UART5RXArray,NumberOfByteRet);
-    	////			  SendToScreen(true);
-    	////			  sprintf(USBTXArray,"Length of string a = %d \n",strlen(UART5RXArray));
-    	////			  SendToScreen(true);
-    	//			  sprintf(USBTXArray,"%6.3f, Angle: %d, Power: %d ret: %d \r\n",CurrentTime(), CurrentAngle, CurrentPower, ret);
-    	//			  SendToScreen(false);
-    	sprintf(USBTXArray,"%6.3f, FAngle: %d, FPower: %d ret: %d \r\n",CurrentTime(), FinalAngle, FinalPower, ret);
-    	SendToScreen(false);
+//
+//    	////			  sprintf(USBTXArray, "%6.3f, ",CurrentTime());
+//    	////			  SendToScreen(false);
+//    	////			  memcpy(USBTXArray,UART5RXArray,NumberOfByteRet);
+//    	////			  SendToScreen(true);
+//    	////			  sprintf(USBTXArray,"Length of string a = %d \n",strlen(UART5RXArray));
+//    	////			  SendToScreen(true);
+//    	//			  sprintf(USBTXArray,"%6.3f, Angle: %d, Power: %d ret: %d \r\n",CurrentTime(), CurrentAngle, CurrentPower, ret);
+//    	//			  SendToScreen(false);
+//    	sprintf(USBTXArray,"%6.3f, FAngle: %d, FPower: %d ret: %d \r\n",CurrentTime(), FinalAngle, FinalPower, ret);
+//    	SendToScreen(false);
     }
-        int PWMValue = 1000 * ((2 - 1) * (double)FinalAngle / (145.0 - 35.0) + 0.5);
-        start_pwm1(PWMValue); // Control Servo
-        start_pwm2(FinalPower * 80);   // Control Car Motor
+    int PWMValue = 1000 * ((2 - 1) * (double)FinalAngle / (145.0 - 35.0) + 0.5);
+    start_pwm1(PWMValue); // Control Servo
+    start_pwm2(FinalPower * 80);   // Control Car Motor
+
+    if (HAL_GetTick() - LastRPMCycle >= 1000)
+    {
+    	LastRPMCycle = HAL_GetTick();
+//    	sprintf(USBTXArray, "%6.3f, \r\n",CurrentTime());
+//    	SendToScreen(false);
+//    	FS_ret2 = f_sync(&USERFile);
+    }
 
     //
   }

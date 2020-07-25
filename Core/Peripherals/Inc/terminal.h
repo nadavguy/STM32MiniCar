@@ -9,6 +9,10 @@
 #define PERIPHERALS_INC_TERMINAL_H_
 
 extern void SendToScreen(bool AddNewLine);
-extern void ParseRCMessage(uint8_t *pData);
+extern void getCMD(void);
+extern void func_dir(void);
+extern void func_imp(void);
+extern uint32_t SearchString(uint8_t *pSrc, uint8_t *StringToLookFor);
+extern uint8_t myswitch( char* token );
 
 #endif /* PERIPHERALS_INC_TERMINAL_H_ */

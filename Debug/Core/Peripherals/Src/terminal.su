@@ -1,3 +1,6 @@
-terminal.c:10:6:SendToScreen	16	static
-terminal.c:20:6:getCMD	4	static
-terminal.c:25:6:ParseRCMessage	24	static
+terminal.c:10:6:func_dir	24	static
+terminal.c:16:6:func_imp	24	static
+terminal.c:23:10:SearchString	40	static
+terminal.c:68:6:SendToScreen	16	static
+terminal.c:78:9:myswitch	24	static
+terminal.c:92:6:getCMD	40	static

@@ -26,34 +26,39 @@ uint8_t ParseRFMessage(uint8_t *Angle, uint8_t *Power)
 	bool HashFound = false;
 	bool CommaFound = false;
 
-	*Angle = 0;
+	*Angle = 90;
 	*Power = 0;
-	for (int i = 0 ; i< strlen(UART5RXArray) - strlen(GeneralHeader); i++ )
+	if (strlen(UART5RXArray) > strlen(GeneralHeader))
 	{
-		if (HeaderFound)
+		for (int i = 0 ; i< strlen(UART5RXArray) - strlen(GeneralHeader); i++ )
 		{
-			break;
-		}
-		for (int j = 0; j < strlen(GeneralHeader); j++)
-		{
-			if (GeneralHeader[j] == UART5RXArray[j+i])
+			if (HeaderFound)
 			{
-				LocalCounter++;
-			}
-			else
-			{
-				LocalCounter = 0;
 				break;
 			}
-			if (strlen(GeneralHeader) == LocalCounter)
+			for (int j = 0; j < strlen(GeneralHeader); j++)
 			{
-				HeaderStartIndex = i;
-				HeaderStopIndex = i + strlen(GeneralHeader);
-				HeaderFound = true;
-				continue;
+				if (GeneralHeader[j] == UART5RXArray[j+i])
+				{
+					LocalCounter++;
+				}
+				else
+				{
+					LocalCounter = 0;
+					break;
+				}
+				if (strlen(GeneralHeader) == LocalCounter)
+				{
+					HeaderStartIndex = i;
+					HeaderStopIndex = i + strlen(GeneralHeader);
+					HeaderFound = true;
+					continue;
+				}
 			}
 		}
 	}
+
+
 	if (HeaderFound)
 	{
 		for (int i = 0 ; i< strlen(UART5RXArray); i++ )
@@ -77,6 +82,8 @@ uint8_t ParseRFMessage(uint8_t *Angle, uint8_t *Power)
 	}
 	if ((HashFound) && (HashFound) && (CommaFound) )
 	{
+		*Angle = 0;
+		*Power = 0;
 		for (int i = 0; i < CommaIndex - HashTagIndex -1 ; i++)
 		{
 			*Power = *Power * 10 + UART5RXArray[HashTagIndex + i + 1] - '0';
@@ -93,6 +100,8 @@ uint8_t ParseRFMessage(uint8_t *Angle, uint8_t *Power)
 		memset(&UART5RXArray[255-MessageEndIndex],0,MessageEndIndex+1);
 		return 0;
 	}
+//	sprintf(USBTXArray, "%6.3f, Error Code",CurrentTime());
+//	SendToScreen(false);
 	return 1;
 }
 
@@ -103,7 +112,6 @@ uint32_t ReadDataFromUART(void)
 	int LocalCounter = 0;
 	HAL_StatusTypeDef Uart_Ret;
 	Uart_Ret = HAL_UART_Receive(&huart5, UART5RXArray, 256,5);
-//	huart->RxState = HAL_UART_STATE_READY;
 	while (UART5RXArray[LocalCounter] != 0)
 	{
 		LocalCounter++;
@@ -119,10 +127,8 @@ uint32_t CheckDataFromUART(void)
 	int StepInc = 0;
 	int ret = 0;
 	HAL_StatusTypeDef Uart_Ret;
-//	memset(LocalUART5RXArray,0,256);
 	HAL_UART_Receive_DMA(&huart5, LocalUART5RXArray, 256);
 	HAL_UART_DMAPause(&huart5);
-//	HAL_Delay(10);
 	memcpy(&UART5RXArray, &LocalUART5RXArray,256);
 	memset(LocalUART5RXArray,0,256);
 	HAL_UART_DMAResume(&huart5);

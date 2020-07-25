@@ -1,3 +1,3 @@
 SerialAgent.c:14:9:ParseRFMessage	80	static
-SerialAgent.c:100:10:ReadDataFromUART	24	static
-SerialAgent.c:115:10:CheckDataFromUART	32	static
+SerialAgent.c:109:10:ReadDataFromUART	24	static
+SerialAgent.c:123:10:CheckDataFromUART	32	static
