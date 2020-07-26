@@ -34,6 +34,7 @@ extern "C" {
 /* USER CODE BEGIN Includes */
 #include "bno055.h"
 #include "stdint.h"
+#include "ff.h"
 //#include "typedefs.h"
 
 
@@ -57,11 +58,14 @@ extern char USBTXArray[1024];
 extern char USBRXArray[1024];
 extern char UART5RXArray[256];
 extern char UART5TXArray[256];
+extern char FileReadBuffer[1024];
 
 extern uint8_t CurrentAngle;
 extern uint8_t CurrentPower;
 
 extern bool isNewMagDataAvailable;
+
+//extern FRESULT FS_ret2;
 
 /* USER CODE END ET */
 

@@ -38,7 +38,13 @@ Core/Peripherals/Src/terminal.o: ../Core/Peripherals/Src/terminal.c \
  ../Drivers/STM32F7xx_HAL_Driver/Inc/stm32f7xx_hal_tim_ex.h \
  ../Drivers/STM32F7xx_HAL_Driver/Inc/stm32f7xx_hal_uart.h \
  ../Drivers/STM32F7xx_HAL_Driver/Inc/stm32f7xx_hal_uart_ex.h \
- ../Core/Peripherals/Inc/bno055.h
+ ../Core/Peripherals/Inc/bno055.h \
+ ../Middlewares/Third_Party/FatFs/src/ff.h \
+ ../Middlewares/Third_Party/FatFs/src/integer.h ../Core/Inc/ffconf.h \
+ ../Core/Inc/main.h ../FATFS/App/fatfs.h \
+ ../Middlewares/Third_Party/FatFs/src/ff_gen_drv.h \
+ ../Middlewares/Third_Party/FatFs/src/diskio.h \
+ ../Middlewares/Third_Party/FatFs/src/ff.h ../Core/Inc/user_diskio.h
 
 ../Core/Inc/main.h:
 
@@ -121,3 +127,21 @@ Core/Peripherals/Src/terminal.o: ../Core/Peripherals/Src/terminal.c \
 ../Drivers/STM32F7xx_HAL_Driver/Inc/stm32f7xx_hal_uart_ex.h:
 
 ../Core/Peripherals/Inc/bno055.h:
+
+../Middlewares/Third_Party/FatFs/src/ff.h:
+
+../Middlewares/Third_Party/FatFs/src/integer.h:
+
+../Core/Inc/ffconf.h:
+
+../Core/Inc/main.h:
+
+../FATFS/App/fatfs.h:
+
+../Middlewares/Third_Party/FatFs/src/ff_gen_drv.h:
+
+../Middlewares/Third_Party/FatFs/src/diskio.h:
+
+../Middlewares/Third_Party/FatFs/src/ff.h:
+
+../Core/Inc/user_diskio.h:

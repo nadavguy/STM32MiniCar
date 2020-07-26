@@ -38,7 +38,10 @@ Core/Peripherals/Src/ms5611.o: ../Core/Peripherals/Src/ms5611.c \
  ../Drivers/STM32F7xx_HAL_Driver/Inc/stm32f7xx_hal_tim_ex.h \
  ../Drivers/STM32F7xx_HAL_Driver/Inc/stm32f7xx_hal_uart.h \
  ../Drivers/STM32F7xx_HAL_Driver/Inc/stm32f7xx_hal_uart_ex.h \
- ../Core/Peripherals/Inc/bno055.h ../Core/Peripherals/Inc/ms5611.h
+ ../Core/Peripherals/Inc/bno055.h \
+ ../Middlewares/Third_Party/FatFs/src/ff.h \
+ ../Middlewares/Third_Party/FatFs/src/integer.h ../Core/Inc/ffconf.h \
+ ../Core/Inc/main.h ../Core/Peripherals/Inc/ms5611.h
 
 ../Core/Inc/main.h:
 
@@ -121,5 +124,13 @@ Core/Peripherals/Src/ms5611.o: ../Core/Peripherals/Src/ms5611.c \
 ../Drivers/STM32F7xx_HAL_Driver/Inc/stm32f7xx_hal_uart_ex.h:
 
 ../Core/Peripherals/Inc/bno055.h:
+
+../Middlewares/Third_Party/FatFs/src/ff.h:
+
+../Middlewares/Third_Party/FatFs/src/integer.h:
+
+../Core/Inc/ffconf.h:
+
+../Core/Inc/main.h:
 
 ../Core/Peripherals/Inc/ms5611.h:

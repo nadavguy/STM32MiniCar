@@ -42,9 +42,9 @@ Core/Src/sd_diskio.o: ../Core/Src/sd_diskio.c \
  ../Drivers/STM32F7xx_HAL_Driver/Inc/stm32f7xx_hal_tim_ex.h \
  ../Drivers/STM32F7xx_HAL_Driver/Inc/stm32f7xx_hal_uart.h \
  ../Drivers/STM32F7xx_HAL_Driver/Inc/stm32f7xx_hal_uart_ex.h \
- ../Core/Peripherals/Inc/bno055.h ../Core/Inc/includes.h \
- ../Middlewares/Third_Party/FatFs/src/diskio.h \
- ../Middlewares/Third_Party/FatFs/src/ff.h ../Core/Inc/fs_display.h \
+ ../Core/Peripherals/Inc/bno055.h \
+ ../Middlewares/Third_Party/FatFs/src/ff.h ../Core/Inc/includes.h \
+ ../Middlewares/Third_Party/FatFs/src/diskio.h ../Core/Inc/fs_display.h \
  ../Core/Inc/sd_diskio.h ../Core/Inc/bsp_driver_sd.h \
  ../Core/Inc/stm32f7xx_hal_sd.h \
  ../Drivers/STM32F7xx_HAL_Driver/Inc/stm32f7xx_ll_sdmmc.h \
@@ -142,11 +142,11 @@ Core/Src/sd_diskio.o: ../Core/Src/sd_diskio.c \
 
 ../Core/Peripherals/Inc/bno055.h:
 
+../Middlewares/Third_Party/FatFs/src/ff.h:
+
 ../Core/Inc/includes.h:
 
 ../Middlewares/Third_Party/FatFs/src/diskio.h:
-
-../Middlewares/Third_Party/FatFs/src/ff.h:
 
 ../Core/Inc/fs_display.h:
 

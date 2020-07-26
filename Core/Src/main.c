@@ -78,7 +78,6 @@ UART_HandleTypeDef huart5;
 UART_HandleTypeDef huart2;
 DMA_HandleTypeDef hdma_uart5_rx;
 DMA_HandleTypeDef hdma_usart2_rx;
-DMA_HandleTypeDef hdma_usart2_tx;
 
 /* USER CODE BEGIN PV */
 char USBRXArray[1024] = {0};
@@ -125,6 +124,7 @@ uint16_t MeasuredRPM = 0;
 uint32_t LastRPMCycle = 0;
 uint32_t NumberOfByteRet = 0;
 uint32_t LastBLERead = 0;
+uint32_t LastTerminalRead = 0;
 uint32_t BytesWritten = 0;
 
 uint8_t MID = 0;
@@ -135,7 +135,7 @@ uint8_t CurrentAngle = 0;
 uint8_t CurrentPower = 0;
 uint8_t ret = 0;
 
-HAL_StatusTypeDef ret;
+//HAL_StatusTypeDef ret;
 RTC_TamperTypeDef LocalsTamper;
 /* USER CODE END PV */
 
@@ -261,15 +261,6 @@ int main(void)
   total_sectors = (getFreeFs->n_fatent - 2) * getFreeFs->csize;
   free_sectors = free_clusters * getFreeFs->csize;
 
-  do
-  {
-    HAL_Delay(1);
-    FS_ret2 = f_open(&USERFile, "Test.txt", FA_READ | FA_CREATE_ALWAYS);
-  } while ( (FS_ret2 != FR_OK) );
-
-  unsigned int br = 0;
-  FS_ret2 = f_read(&USERFile, &FileReadBuffer, sizeof(FileReadBuffer), &br);
-
   vBat = measureBattery();
   MS56XXInit();
   BNOInit();
@@ -349,11 +340,16 @@ int main(void)
 //	  MeasuredRPM = RPMMeasurement();
 //    LastRPMCycle++;
 //    sprintf(UART5TXArray, "%d\r\n",LastRPMCycle);
-
+    if (HAL_GetTick() - LastTerminalRead >= 100)
+    {
+//    	HAL_UART_DMAPause(&huart2);
+        getCMD();
+//        HAL_UART_DMAResume(&huart2);
+        LastTerminalRead = HAL_GetTick();
+    }
 //	Read Sticks messages received through BlueTooth unit
     if (HAL_GetTick() - LastBLERead >= 100)
     {
-        getCMD();
     	LastBLERead = HAL_GetTick();
     	NumberOfByteRet = CheckDataFromUART();
     	ret = ParseRFMessage(&CurrentAngle, &CurrentPower);
@@ -1040,9 +1036,6 @@ static void MX_DMA_Init(void)
   /* DMA1_Stream5_IRQn interrupt configuration */
   HAL_NVIC_SetPriority(DMA1_Stream5_IRQn, 0, 0);
   HAL_NVIC_EnableIRQ(DMA1_Stream5_IRQn);
-  /* DMA1_Stream6_IRQn interrupt configuration */
-  HAL_NVIC_SetPriority(DMA1_Stream6_IRQn, 0, 0);
-  HAL_NVIC_EnableIRQ(DMA1_Stream6_IRQn);
 
 }
 
