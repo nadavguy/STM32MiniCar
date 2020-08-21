@@ -41,7 +41,7 @@ Core/Peripherals/Src/LED.o: ../Core/Peripherals/Src/LED.c \
  ../Core/Peripherals/Inc/bno055.h \
  ../Middlewares/Third_Party/FatFs/src/ff.h \
  ../Middlewares/Third_Party/FatFs/src/integer.h ../Core/Inc/ffconf.h \
- ../Core/Inc/main.h
+ ../Core/Inc/main.h ../Core/GPIO/Inc/PushButton.h
 
 ../Core/Inc/main.h:
 
@@ -132,3 +132,5 @@ Core/Peripherals/Src/LED.o: ../Core/Peripherals/Src/LED.c \
 ../Core/Inc/ffconf.h:
 
 ../Core/Inc/main.h:
+
+../Core/GPIO/Inc/PushButton.h:

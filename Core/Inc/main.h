@@ -54,7 +54,7 @@ extern TIM_HandleTypeDef htim4;
 extern UART_HandleTypeDef huart2;
 extern UART_HandleTypeDef huart5;
 extern SPI_HandleTypeDef hspi1;
-extern char USBTXArray[1024];
+extern char USBTXArray[4096];
 extern char USBRXArray[1024];
 extern char UART5RXArray[256];
 extern char UART5TXArray[256];
@@ -63,8 +63,13 @@ extern char FileReadBuffer[1024];
 extern uint8_t CurrentAngle;
 extern uint8_t CurrentPower;
 
-extern bool isNewMagDataAvailable;
+extern uint32_t BytesWritten;
 
+extern bool isNewMagDataAvailable;
+extern bool ActiveLog;
+extern bool isDebugMode;
+
+extern double vBat;
 //extern FRESULT FS_ret2;
 
 /* USER CODE END ET */

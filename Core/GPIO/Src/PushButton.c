@@ -24,7 +24,8 @@ void CheckButton(void)
 	PA0PinState = HAL_GPIO_ReadPin(GPIOA, GPIO_PIN_0);
 	if (PA0PinState == GPIO_PIN_RESET)
 	{
-		SetRGB(0, 250, 0);
+//		SetRGB(0, 250, 250);
+		ButtonIsHigh = false;
 		ButtonIsLow = true;
 	}
 	else
@@ -44,7 +45,7 @@ void CheckButton(void)
 			}
 			sprintf(USBTXArray, "%6.3f, Button press duration: %6.3f\r\n",
 					CurrentTime(), (HAL_GetTick() - ButtonPressStart) / 1000.0);
-			SendToScreen(false);
+			Print(false, true, true);
 		}
 		if (HAL_GetTick() - ButtonPressCycleStart > 3000)
 		{
@@ -52,7 +53,7 @@ void CheckButton(void)
 			{
 				//Do this
 				sprintf(USBTXArray, "%6.3f, Do this\r\n", CurrentTime());
-				SendToScreen(false);
+				Print(false, true, true);
 //
 //				 HAL_PWR_DisableWakeUpPin(PWR_WAKEUP_PIN1);
 //				 HAL_PWR_DisableWakeUpPin(PWR_WAKEUP_PIN2);
@@ -77,7 +78,7 @@ void CheckButton(void)
 			{
 				//Do that
 				sprintf(USBTXArray, "%6.3f, Do that\r\n", CurrentTime());
-				SendToScreen(false);
+				Print(false, true, true);
 			}
 			else if ((ButtonPressDurationmSec[0] >= 1000)
 					&& (ButtonPressDurationmSec[1] == 0))
@@ -85,14 +86,14 @@ void CheckButton(void)
 				//Do that
 				sprintf(USBTXArray, "%6.3f, Do that Single Press\r\n",
 						CurrentTime());
-				SendToScreen(false);
+				Print(false, true, true);
 			}
 			else if ((ButtonPressDurationmSec[0] >= 500)
 					&& (ButtonPressDurationmSec[1] >= 1000))
 			{
 				//Or maybe this
 				sprintf(USBTXArray, "%6.3f, Or maybe this\r\n", CurrentTime());
-				SendToScreen(false);
+				Print(false, true, true);
 
 			}
 			else if ((ButtonPressDurationmSec[0] >= 500)
@@ -100,12 +101,12 @@ void CheckButton(void)
 			{
 				//Or maybe that
 				sprintf(USBTXArray, "%6.3f, Or maybe that\r\n", CurrentTime());
-				SendToScreen(false);
+				Print(false, true, true);
 			}
 			ButtonCycle = 0;
 			memset(ButtonPressDurationmSec, 0, 20);
 		}
-		SetRGB(250, 0, 0);
+//		SetRGB(250, 0, 0);
 		ButtonIsHigh = true;
 		ButtonIsLow = false;
 		ButtonPressStart = HAL_GetTick();

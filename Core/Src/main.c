@@ -17,7 +17,6 @@
  ******************************************************************************
  */
 /* USER CODE END Header */
-
 /* Includes ------------------------------------------------------------------*/
 #include "main.h"
 #include "fatfs.h"
@@ -83,7 +82,7 @@ DMA_HandleTypeDef hdma_usart2_rx;
 char USBRXArray[1024] = {0};
 char UART5RXArray[256] = {0};
 char UART5TXArray[256] = {0};
-char USBTXArray[1024] = "";
+char USBTXArray[4096] = "";
 
 char TerminalBuffer[1024] = "";
 
@@ -113,6 +112,9 @@ bool isNewMagDataAvailable = false;
 bool MagWasInMax = true;
 bool MagWasInMin = false;
 
+bool ActiveLog = false;
+bool isDebugMode = false;
+
 FRESULT FS_ret2;
 
 uint16_t RR1 = 0;
@@ -126,6 +128,10 @@ uint32_t NumberOfByteRet = 0;
 uint32_t LastBLERead = 0;
 uint32_t LastTerminalRead = 0;
 uint32_t BytesWritten = 0;
+uint32_t LastBatteryMeasurement = 0;
+uint32_t LastCRSFMessage = 0;
+uint32_t LastDiffPrint = 0;
+uint32_t PWMValue = 0;
 
 uint8_t MID = 0;
 uint8_t DID = 0;
@@ -134,6 +140,7 @@ uint8_t FinalPower = 0;
 uint8_t CurrentAngle = 0;
 uint8_t CurrentPower = 0;
 uint8_t ret = 0;
+
 
 //HAL_StatusTypeDef ret;
 RTC_TamperTypeDef LocalsTamper;
@@ -283,6 +290,12 @@ int main(void)
 //  NumberOfByteRet = CheckDataFromUART();
   LastBLERead = HAL_GetTick();
   HAL_Delay(100);
+//  *(volatile uint32_t *)0xbadcafe;
+
+  start_pwm1(PWMValue); // Control Servo
+  start_pwm2(FinalPower * 80);   // Control Car Motor
+  start_pwm3();
+
 
   /* USER CODE END 2 */
 
@@ -293,7 +306,7 @@ int main(void)
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
-//	  readBNOAnglesDeg();
+	  readBNOAnglesDeg();
 //	  if ((fabs(Roll) < 30) && (fabs(Pitch) < 30))
 //	  {
 //		  SetRGB(0, 250, 0);
@@ -311,16 +324,14 @@ int main(void)
 	  MS56XXCyclicRead();
 	  if (isNewMS56XXDataAvailable)
 	  {
-//		  sprintf(USBTXArray, "%6.3f, Pressure: %d, Temp: %d\r\n",
-//				  CurrentTime(), P, TEMP);
-		  ret = strlen(USBTXArray);
-//		  FS_ret2 = f_write(&USERFile, USBTXArray, strlen(USBTXArray), &BytesWritten);
-		  SendToScreen(false);
+		  sprintf(USBTXArray, "%6.3f, Pressure: %d, Temp: %d\r\n",
+				  CurrentTime(), P, TEMP);
+		  Print(false, true, isDebugMode);
+		  isNewMS56XXDataAvailable = false;
 	  }
 
     CheckButton();
 //    readBNOMagnetometer();
-
 //    if (isNewMagDataAvailable)
 //    {
 //      sprintf(USBTXArray, "%6.3f, MagX: %6.3f, MagY: %6.3f, MagZ: %6.3f\r\n",
@@ -342,19 +353,17 @@ int main(void)
 //    sprintf(UART5TXArray, "%d\r\n",LastRPMCycle);
     if (HAL_GetTick() - LastTerminalRead >= 100)
     {
-//    	HAL_UART_DMAPause(&huart2);
         getCMD();
-//        HAL_UART_DMAResume(&huart2);
         LastTerminalRead = HAL_GetTick();
     }
 //	Read Sticks messages received through BlueTooth unit
-    if (HAL_GetTick() - LastBLERead >= 100)
-    {
-    	LastBLERead = HAL_GetTick();
-    	NumberOfByteRet = CheckDataFromUART();
-    	ret = ParseRFMessage(&CurrentAngle, &CurrentPower);
-    	FinalAngle = CurrentAngle * (1 - ret) + FinalAngle * ret;
-    	FinalPower = CurrentPower * (1 - ret) + FinalPower * ret;
+//    if (HAL_GetTick() - LastBLERead >= 100)
+//    {
+//    	LastBLERead = HAL_GetTick();
+//    	NumberOfByteRet = CheckDataFromUART();
+//    	ret = ParseRFMessage(&CurrentAngle, &CurrentPower);
+//    	FinalAngle = CurrentAngle * (1 - ret) + FinalAngle * ret;
+//    	FinalPower = CurrentPower * (1 - ret) + FinalPower * ret;
 //
 //    	////			  sprintf(USBTXArray, "%6.3f, ",CurrentTime());
 //    	////			  SendToScreen(false);
@@ -366,17 +375,30 @@ int main(void)
 //    	//			  SendToScreen(false);
 //    	sprintf(USBTXArray,"%6.3f, FAngle: %d, FPower: %d ret: %d \r\n",CurrentTime(), FinalAngle, FinalPower, ret);
 //    	SendToScreen(false);
-    }
-    int PWMValue = 1000 * ((2 - 1) * (double)FinalAngle / (145.0 - 35.0) + 0.5);
-    start_pwm1(PWMValue); // Control Servo
+//    }
+    PWMValue = 1000 * ((2 - 1) * (double)FinalAngle / (135.0 - 45.0) + 0.5);
+    set_pwm1(PWMValue);
     start_pwm2(FinalPower * 80);   // Control Car Motor
 
     if (HAL_GetTick() - LastRPMCycle >= 1000)
     {
     	LastRPMCycle = HAL_GetTick();
-//    	sprintf(USBTXArray, "%6.3f, \r\n",CurrentTime());
-//    	SendToScreen(false);
+    	sprintf(USBTXArray, "%6.3f, \r\n",CurrentTime());
+    	Print(false, true, isDebugMode);
 //    	FS_ret2 = f_sync(&USERFile);
+    }
+
+    if (HAL_GetTick() - LastBatteryMeasurement > 5 * 60 * 1000)
+    {
+    	LastBatteryMeasurement = HAL_GetTick();
+    	vBat = measureBattery();
+    }
+    ShowStateLED();
+    if (HAL_GetTick() - LastDiffPrint > 100)
+    {
+    	sprintf(USBTXArray, "%6.3f, Difference: %d [mSec], Frequency: %d [Hz] \r\n",CurrentTime(), Difference * 10 / 4, Frequency);
+    	Print(false, false, true);
+    	LastDiffPrint = HAL_GetTick();
     }
 
     //
@@ -394,14 +416,15 @@ void SystemClock_Config(void)
   RCC_ClkInitTypeDef RCC_ClkInitStruct = {0};
   RCC_PeriphCLKInitTypeDef PeriphClkInitStruct = {0};
 
-  /** Configure LSE Drive Capability 
+  /** Configure LSE Drive Capability
   */
   HAL_PWR_EnableBkUpAccess();
-  /** Configure the main internal regulator output voltage 
+  /** Configure the main internal regulator output voltage
   */
   __HAL_RCC_PWR_CLK_ENABLE();
   __HAL_PWR_VOLTAGESCALING_CONFIG(PWR_REGULATOR_VOLTAGE_SCALE1);
-  /** Initializes the CPU, AHB and APB busses clocks 
+  /** Initializes the RCC Oscillators according to the specified parameters
+  * in the RCC_OscInitTypeDef structure.
   */
   RCC_OscInitStruct.OscillatorType = RCC_OSCILLATORTYPE_HSE;
   RCC_OscInitStruct.HSEState = RCC_HSE_ON;
@@ -415,13 +438,13 @@ void SystemClock_Config(void)
   {
     Error_Handler();
   }
-  /** Activate the Over-Drive mode 
+  /** Activate the Over-Drive mode
   */
   if (HAL_PWREx_EnableOverDrive() != HAL_OK)
   {
     Error_Handler();
   }
-  /** Initializes the CPU, AHB and APB busses clocks 
+  /** Initializes the CPU, AHB and APB buses clocks
   */
   RCC_ClkInitStruct.ClockType = RCC_CLOCKTYPE_HCLK|RCC_CLOCKTYPE_SYSCLK
                               |RCC_CLOCKTYPE_PCLK1|RCC_CLOCKTYPE_PCLK2;
@@ -451,7 +474,7 @@ void SystemClock_Config(void)
   {
     Error_Handler();
   }
-  /** Enables the Clock Security System 
+  /** Enables the Clock Security System
   */
   HAL_RCC_EnableCSS();
 }
@@ -473,7 +496,7 @@ static void MX_ADC1_Init(void)
   /* USER CODE BEGIN ADC1_Init 1 */
 
   /* USER CODE END ADC1_Init 1 */
-  /** Configure the global features of the ADC (Clock, Resolution, Data Alignment and number of conversion) 
+  /** Configure the global features of the ADC (Clock, Resolution, Data Alignment and number of conversion)
   */
   hadc1.Instance = ADC1;
   hadc1.Init.ClockPrescaler = ADC_CLOCK_SYNC_PCLK_DIV4;
@@ -491,7 +514,7 @@ static void MX_ADC1_Init(void)
   {
     Error_Handler();
   }
-  /** Configure for the selected ADC regular channel its corresponding rank in the sequencer and its sample time. 
+  /** Configure for the selected ADC regular channel its corresponding rank in the sequencer and its sample time.
   */
   sConfig.Channel = ADC_CHANNEL_13;
   sConfig.Rank = ADC_REGULAR_RANK_1;
@@ -534,13 +557,13 @@ static void MX_I2C1_Init(void)
   {
     Error_Handler();
   }
-  /** Configure Analogue filter 
+  /** Configure Analogue filter
   */
   if (HAL_I2CEx_ConfigAnalogFilter(&hi2c1, I2C_ANALOGFILTER_ENABLE) != HAL_OK)
   {
     Error_Handler();
   }
-  /** Configure Digital filter 
+  /** Configure Digital filter
   */
   if (HAL_I2CEx_ConfigDigitalFilter(&hi2c1, 0) != HAL_OK)
   {
@@ -605,7 +628,7 @@ static void MX_RTC_Init(void)
   /* USER CODE BEGIN RTC_Init 1 */
 
   /* USER CODE END RTC_Init 1 */
-  /** Initialize RTC Only 
+  /** Initialize RTC Only
   */
   hrtc.Instance = RTC;
   hrtc.Init.HourFormat = RTC_HOURFORMAT_24;
@@ -623,7 +646,7 @@ static void MX_RTC_Init(void)
 
   /* USER CODE END Check_RTC_BKUP */
 
-  /** Initialize RTC and set the Time and Date 
+  /** Initialize RTC and set the Time and Date
   */
   sTime.Hours = 0;
   sTime.Minutes = 0;
@@ -756,14 +779,14 @@ static void MX_TIM1_Init(void)
   {
     Error_Handler();
   }
-  sMasterConfig.MasterOutputTrigger = TIM_TRGO_UPDATE;
-  sMasterConfig.MasterOutputTrigger2 = TIM_TRGO2_UPDATE;
+  sMasterConfig.MasterOutputTrigger = TIM_TRGO_RESET;
+  sMasterConfig.MasterOutputTrigger2 = TIM_TRGO2_RESET;
   sMasterConfig.MasterSlaveMode = TIM_MASTERSLAVEMODE_DISABLE;
   if (HAL_TIMEx_MasterConfigSynchronization(&htim1, &sMasterConfig) != HAL_OK)
   {
     Error_Handler();
   }
-  sConfigIC.ICPolarity = TIM_INPUTCHANNELPOLARITY_RISING;
+  sConfigIC.ICPolarity = TIM_INPUTCHANNELPOLARITY_BOTHEDGE;
   sConfigIC.ICSelection = TIM_ICSELECTION_DIRECTTI;
   sConfigIC.ICPrescaler = TIM_ICPSC_DIV1;
   sConfigIC.ICFilter = 0;
@@ -1020,10 +1043,10 @@ static void MX_USART2_UART_Init(void)
 
 }
 
-/** 
+/**
   * Enable DMA controller clock
   */
-static void MX_DMA_Init(void) 
+static void MX_DMA_Init(void)
 {
 
   /* DMA controller clock enable */
@@ -1072,23 +1095,23 @@ static void MX_GPIO_Init(void)
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
   HAL_GPIO_Init(Flash_WP_GPIO_Port, &GPIO_InitStruct);
 
-  /*Configure GPIO pins : PE3 PE4 PE5 PE6 
-                           PE9 PE10 PE11 PE12 
-                           PE13 PE14 PE15 PE0 
+  /*Configure GPIO pins : PE3 PE4 PE5 PE6
+                           PE9 PE10 PE11 PE12
+                           PE13 PE14 PE15 PE0
                            PE1 */
-  GPIO_InitStruct.Pin = GPIO_PIN_3|GPIO_PIN_4|GPIO_PIN_5|GPIO_PIN_6 
-                          |GPIO_PIN_9|GPIO_PIN_10|GPIO_PIN_11|GPIO_PIN_12 
-                          |GPIO_PIN_13|GPIO_PIN_14|GPIO_PIN_15|GPIO_PIN_0 
+  GPIO_InitStruct.Pin = GPIO_PIN_3|GPIO_PIN_4|GPIO_PIN_5|GPIO_PIN_6
+                          |GPIO_PIN_9|GPIO_PIN_10|GPIO_PIN_11|GPIO_PIN_12
+                          |GPIO_PIN_13|GPIO_PIN_14|GPIO_PIN_15|GPIO_PIN_0
                           |GPIO_PIN_1;
   GPIO_InitStruct.Mode = GPIO_MODE_ANALOG;
   GPIO_InitStruct.Pull = GPIO_NOPULL;
   HAL_GPIO_Init(GPIOE, &GPIO_InitStruct);
 
-  /*Configure GPIO pins : PC0 PC1 PC2 PC4 
-                           PC5 PC6 PC7 PC9 
+  /*Configure GPIO pins : PC0 PC1 PC2 PC4
+                           PC5 PC6 PC7 PC9
                            PC10 */
-  GPIO_InitStruct.Pin = GPIO_PIN_0|GPIO_PIN_1|GPIO_PIN_2|GPIO_PIN_4 
-                          |GPIO_PIN_5|GPIO_PIN_6|GPIO_PIN_7|GPIO_PIN_9 
+  GPIO_InitStruct.Pin = GPIO_PIN_0|GPIO_PIN_1|GPIO_PIN_2|GPIO_PIN_4
+                          |GPIO_PIN_5|GPIO_PIN_6|GPIO_PIN_7|GPIO_PIN_9
                           |GPIO_PIN_10;
   GPIO_InitStruct.Mode = GPIO_MODE_ANALOG;
   GPIO_InitStruct.Pull = GPIO_NOPULL;
@@ -1114,27 +1137,27 @@ static void MX_GPIO_Init(void)
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
   HAL_GPIO_Init(MS5611_CS_GPIO_Port, &GPIO_InitStruct);
 
-  /*Configure GPIO pins : PA6 PA7 PA9 PA12 
+  /*Configure GPIO pins : PA6 PA7 PA9 PA12
                            PA15 */
-  GPIO_InitStruct.Pin = GPIO_PIN_6|GPIO_PIN_7|GPIO_PIN_9|GPIO_PIN_12 
+  GPIO_InitStruct.Pin = GPIO_PIN_6|GPIO_PIN_7|GPIO_PIN_9|GPIO_PIN_12
                           |GPIO_PIN_15;
   GPIO_InitStruct.Mode = GPIO_MODE_ANALOG;
   GPIO_InitStruct.Pull = GPIO_NOPULL;
   HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);
 
-  /*Configure GPIO pins : PB0 PB1 PB10 PB11 
+  /*Configure GPIO pins : PB0 PB1 PB10 PB11
                            PB12 PB13 PB14 PB15 */
-  GPIO_InitStruct.Pin = GPIO_PIN_0|GPIO_PIN_1|GPIO_PIN_10|GPIO_PIN_11 
+  GPIO_InitStruct.Pin = GPIO_PIN_0|GPIO_PIN_1|GPIO_PIN_10|GPIO_PIN_11
                           |GPIO_PIN_12|GPIO_PIN_13|GPIO_PIN_14|GPIO_PIN_15;
   GPIO_InitStruct.Mode = GPIO_MODE_ANALOG;
   GPIO_InitStruct.Pull = GPIO_NOPULL;
   HAL_GPIO_Init(GPIOB, &GPIO_InitStruct);
 
-  /*Configure GPIO pins : PD8 PD9 PD10 PD11 
-                           PD14 PD3 PD4 PD5 
+  /*Configure GPIO pins : PD8 PD9 PD10 PD11
+                           PD14 PD3 PD4 PD5
                            PD6 PD7 */
-  GPIO_InitStruct.Pin = GPIO_PIN_8|GPIO_PIN_9|GPIO_PIN_10|GPIO_PIN_11 
-                          |GPIO_PIN_14|GPIO_PIN_3|GPIO_PIN_4|GPIO_PIN_5 
+  GPIO_InitStruct.Pin = GPIO_PIN_8|GPIO_PIN_9|GPIO_PIN_10|GPIO_PIN_11
+                          |GPIO_PIN_14|GPIO_PIN_3|GPIO_PIN_4|GPIO_PIN_5
                           |GPIO_PIN_6|GPIO_PIN_7;
   GPIO_InitStruct.Mode = GPIO_MODE_ANALOG;
   GPIO_InitStruct.Pull = GPIO_NOPULL;
@@ -1177,7 +1200,7 @@ void Error_Handler(void)
   * @retval None
   */
 void assert_failed(uint8_t *file, uint32_t line)
-{ 
+{
   /* USER CODE BEGIN 6 */
   /* User can add his own implementation to report the file name and line number,
      tex: printf("Wrong parameters value: file %s on line %d\r\n", file, line) */

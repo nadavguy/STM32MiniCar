@@ -9,3 +9,4 @@
 extern void led_init(void);
 extern void led_stop(void);
 extern void SetRGB(int Red, int Green, int Blue);
+extern void ShowStateLED(void);

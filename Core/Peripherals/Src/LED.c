@@ -6,6 +6,7 @@
  */
 
 #include "main.h"
+#include "PushButton.h"
 
 void led_init(void)
 {
@@ -33,3 +34,25 @@ void SetRGB(int Red, int Green, int Blue)
 	TIM4->CCR4 = Blue * 8000 / 250;
 }
 
+void ShowStateLED(void)
+{
+	if (ButtonIsLow)
+	{
+		SetRGB(0, 250, 250); // Cyan
+	}
+	else
+	{
+		if (vBat > 4.0)
+		{
+			SetRGB(0, 250, 0);
+		}
+		else if ( (vBat > 3.7) && (vBat <= 4.0) )
+		{
+			SetRGB(250, 250, 0);
+		}
+		else
+		{
+			SetRGB(250, 0, 0);
+		}
+	}
+}
